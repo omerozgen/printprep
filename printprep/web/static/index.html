@@ -121,6 +121,18 @@
         <span id="export-hint" class="muted-note"></span>
       </div>
     </section>
+
+    <section class="card">
+      <h2>Toplu Analiz</h2>
+      <p class="muted-note">Birden çok STL seç; her biri için özet tablo. Başlığa tıklayarak sırala.</p>
+      <div class="batch-controls">
+        <input type="file" id="batch-input" accept=".stl" multiple hidden>
+        <button type="button" id="batch-btn" class="btn">STL'leri seç ve analiz et</button>
+        <button type="button" id="batch-csv" class="btn btn-ghost" hidden>CSV indir</button>
+      </div>
+      <div id="batch-status" class="muted-note"></div>
+      <div id="batch-result"></div>
+    </section>
   </main>
 
   <footer>

@@ -18,14 +18,29 @@ def test_merge_boolean_union_when_bodies_are_volumes(clean_cube):
         assert report.volume_after > 0
 
 
-def test_merge_concatenate_fallback_for_non_volume(clean_cube, broken_cube):
-    # broken_cube is open (not a volume) -> true union impossible -> concatenate
+def test_merge_repairs_non_volume_body_when_possible(clean_cube, broken_cube):
+    # broken_cube (simple open box) can be repaired to a volume by pymeshfix,
+    # so when it's available the merge uses a real boolean union.
+    import pytest
+    pytest.importorskip("pymeshfix")
+    pytest.importorskip("manifold3d")
+    bc = broken_cube.copy()
+    bc.apply_translation([40, 0, 0])
+    combo = trimesh.util.concatenate([clean_cube, bc])
+
+    _, report = merge_to_single(combo)
+    assert report.bodies_before == 2
+    assert report.method == "boolean"
+
+
+def test_merge_concatenate_fallback_without_meshfix(monkeypatch, clean_cube, broken_cube):
+    # with no aggressive repair available, a non-volume body forces concatenation
+    monkeypatch.setattr("printprep.core.merge.meshfix_available", lambda: False)
     bc = broken_cube.copy()
     bc.apply_translation([40, 0, 0])
     combo = trimesh.util.concatenate([clean_cube, bc])
 
     merged, report = merge_to_single(combo)
-
     assert report.bodies_before == 2
     assert report.method == "concatenate"
     assert len(merged.faces) > 0

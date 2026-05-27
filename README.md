@@ -32,6 +32,10 @@ printprep orient model.stl --output oriented_model.stl
 # Ayrı gövdeleri tek parçaya birleştir (boolean union için: pip install -e ".[merge]")
 printprep merge model.stl --output merged_model.stl
 
+# Agresif onarım (inatçı meshler için, opsiyonel): pip install -e ".[repair]"
+#   fix komutu standart onarım yetmezse otomatik olarak pymeshfix'e yükselir
+#   (geometriyi bozacaksa güvenlik koruması devreye girip standart sonucu korur)
+
 # Bir klasördeki tüm STL'leri toplu analiz et
 printprep batch ./models --json report.json
 

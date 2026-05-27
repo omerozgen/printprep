@@ -81,6 +81,22 @@ def test_export_orca_zip(clean_cube):
     assert any(n.endswith("_process.json") for n in names)
 
 
+def test_batch(clean_cube, broken_cube):
+    files = [
+        ("files", ("a.stl", _stl(clean_cube), "model/stl")),
+        ("files", ("b.stl", _stl(broken_cube), "model/stl")),
+    ]
+    r = client.post("/api/batch", files=files)
+    assert r.status_code == 200
+    rows = r.json()["results"]
+    assert len(rows) == 2
+    names = {row["filename"] for row in rows}
+    assert names == {"a.stl", "b.stl"}
+    clean_row = next(row for row in rows if row["filename"] == "a.stl")
+    assert clean_row["is_watertight"] is True
+    assert clean_row["body_count"] == 1
+
+
 def test_merge(broken_cube):
     r = client.post("/api/merge", files=_file(broken_cube, "broken.stl"))
     assert r.status_code == 200

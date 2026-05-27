@@ -1,4 +1,18 @@
+import trimesh
+
 from printprep.core import repair_mesh
+from printprep.core.repair import geometry_preserved
+
+
+def test_geometry_preserved_rejects_shape_change(clean_cube):
+    # a result with very different extents (mangled) must be rejected
+    shrunk = trimesh.creation.box(extents=[2, 2, 2])
+    assert geometry_preserved(clean_cube, shrunk) is False
+
+
+def test_geometry_preserved_accepts_similar(clean_cube):
+    similar = trimesh.creation.box(extents=[20, 20, 20])
+    assert geometry_preserved(clean_cube, similar) is True
 
 
 def test_repair_makes_watertight(broken_cube):

@@ -1,8 +1,16 @@
-"""Mesh repair operations with a fixed, correct ordering."""
+"""Mesh repair operations with a fixed, correct ordering.
+
+Standard repair uses trimesh (merge/degenerate/duplicate/fill_holes/fix_normals).
+When that leaves the mesh non-watertight and `aggressive` is on, it escalates to
+pymeshfix (optional `[repair]` extra) — but only accepts the result when a guard
+confirms the geometry wasn't mangled (pymeshfix collapses thin shells, so e.g. a
+ventilated tray would be rejected and the standard result kept).
+"""
 
 from dataclasses import dataclass
-from typing import Tuple
+from typing import Optional, Tuple
 
+import numpy as np
 import trimesh
 import trimesh.repair as repair
 from trimesh import grouping
@@ -18,6 +26,7 @@ class RepairReport:
     watertight_after: bool
     volume_after: float
     open_edges_after: int  # remaining boundary edges (0 == watertight)
+    method: str  # "standard" or "meshfix"
 
 
 def _boundary_edge_count(mesh: trimesh.Trimesh) -> int:
@@ -27,8 +36,41 @@ def _boundary_edge_count(mesh: trimesh.Trimesh) -> int:
     return int(len(grouping.group_rows(mesh.edges_sorted, require_count=1)))
 
 
-def repair_mesh(mesh: trimesh.Trimesh) -> Tuple[trimesh.Trimesh, RepairReport]:
-    """Repair a mesh in place and return (mesh, report).
+def meshfix_available() -> bool:
+    try:
+        import pymeshfix  # noqa: F401
+        return True
+    except Exception:
+        return False
+
+
+def apply_meshfix(mesh: trimesh.Trimesh) -> trimesh.Trimesh:
+    """Run pymeshfix and return a new Trimesh (may differ substantially)."""
+    import pymeshfix
+    v, f = pymeshfix.clean_from_arrays(np.asarray(mesh.vertices, dtype=np.float64),
+                                       np.asarray(mesh.faces, dtype=np.int32))
+    return trimesh.Trimesh(vertices=v, faces=f, process=True)
+
+
+def geometry_preserved(before: trimesh.Trimesh, after: trimesh.Trimesh) -> bool:
+    """True if `after` keeps roughly the same shape as `before`.
+
+    Guards against pymeshfix collapsing thin shells: rejects big bounding-box
+    changes or a drastic face-count collapse.
+    """
+    if len(after.faces) == 0:
+        return False
+    eb = np.asarray(before.extents, dtype=float)
+    ea = np.asarray(after.extents, dtype=float)
+    if np.any(np.abs(ea - eb) > 0.10 * np.maximum(eb, 1e-9)):
+        return False
+    if len(after.faces) < 0.2 * max(1, len(before.faces)):
+        return False
+    return True
+
+
+def repair_mesh(mesh: trimesh.Trimesh, aggressive: bool = True) -> Tuple[trimesh.Trimesh, RepairReport]:
+    """Repair a mesh and return (mesh, report).
 
     Order matters: fill holes BEFORE fixing normals, otherwise newly added fill
     faces can leave the solid inside-out (negative volume). Hole-filling runs a
@@ -50,7 +92,6 @@ def repair_mesh(mesh: trimesh.Trimesh) -> Tuple[trimesh.Trimesh, RepairReport]:
 
     mesh.remove_unreferenced_vertices()
 
-    # Iterative hole filling: stop when watertight or a pass makes no progress.
     holes_filled = False
     for _ in range(3):
         if mesh.is_watertight:
@@ -62,7 +103,19 @@ def repair_mesh(mesh: trimesh.Trimesh) -> Tuple[trimesh.Trimesh, RepairReport]:
         else:
             break
 
-    repair.fix_normals(mesh)  # winding + outward direction, last
+    repair.fix_normals(mesh)
+    method = "standard"
+
+    # Escalate to pymeshfix only if still open and the result is shape-preserving.
+    if aggressive and not mesh.is_watertight and meshfix_available():
+        try:
+            candidate = apply_meshfix(mesh)
+            if candidate.is_watertight and geometry_preserved(mesh, candidate):
+                repair.fix_normals(candidate)
+                mesh = candidate
+                method = "meshfix"
+        except Exception:
+            pass
 
     report = RepairReport(
         merged_vertices=merged_vertices,
@@ -73,5 +126,6 @@ def repair_mesh(mesh: trimesh.Trimesh) -> Tuple[trimesh.Trimesh, RepairReport]:
         watertight_after=bool(mesh.is_watertight),
         volume_after=abs(float(mesh.volume)),
         open_edges_after=_boundary_edge_count(mesh),
+        method=method,
     )
     return mesh, report

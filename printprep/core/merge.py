@@ -9,8 +9,11 @@ Two strategies, picked automatically:
 """
 
 from dataclasses import dataclass
+from typing import List, Optional
 
 import trimesh
+
+from printprep.core.repair import apply_meshfix, geometry_preserved, meshfix_available
 
 
 @dataclass
@@ -23,6 +26,28 @@ class MergeReport:
     note: str
 
 
+def _as_volumes(parts: List[trimesh.Trimesh]) -> Optional[List[trimesh.Trimesh]]:
+    """Return a list where every part is a closed volume, repairing non-volume
+    bodies with guarded pymeshfix. Returns None if any body can't be made a
+    volume without mangling it (so the caller falls back to concatenation)."""
+    out = []
+    for p in parts:
+        if p.is_volume:
+            out.append(p)
+            continue
+        if not meshfix_available():
+            return None
+        try:
+            fixed = apply_meshfix(p)
+        except Exception:
+            return None
+        if fixed.is_volume and geometry_preserved(p, fixed):
+            out.append(fixed)
+        else:
+            return None
+    return out
+
+
 def merge_to_single(mesh: trimesh.Trimesh):
     """Return (merged_mesh, MergeReport)."""
     parts = mesh.split(only_watertight=False)
@@ -30,10 +55,12 @@ def merge_to_single(mesh: trimesh.Trimesh):
         parts = [mesh]
     bodies_before = len(parts)
 
-    # Preferred: true boolean union (requires all bodies to be closed volumes).
-    if bodies_before > 1 and all(p.is_volume for p in parts):
+    # Preferred: true boolean union. Every body must be a closed volume; try to
+    # repair non-volume bodies first (guarded, so thin shells are left alone).
+    union_parts = _as_volumes(parts) if bodies_before > 1 else None
+    if union_parts is not None:
         try:
-            merged = trimesh.boolean.union(parts)
+            merged = trimesh.boolean.union(union_parts)
             merged.merge_vertices()
             return merged, MergeReport(
                 method="boolean",

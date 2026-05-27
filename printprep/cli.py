@@ -105,6 +105,8 @@ def fix(path, output):
     console.print(f"  ✓ Removed {report.removed_degenerate} degenerate faces")
     console.print(f"  ✓ Removed {report.removed_duplicate} duplicate faces")
     console.print(f"  ✓ Holes filled: {report.holes_filled}")
+    if report.method == "meshfix":
+        console.print("  ✓ Aggressive repair (pymeshfix) applied")
     console.print(
         f"\nWatertight: {report.watertight_before} → {report.watertight_after}  |  "
         f"Volume: {report.volume_after / 1000:.2f} cm³"

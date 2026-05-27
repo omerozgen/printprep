@@ -42,6 +42,11 @@ const els = {
   exportFormat: document.getElementById("export-format"),
   exportBtn: document.getElementById("export-btn"),
   exportHint: document.getElementById("export-hint"),
+  batchInput: document.getElementById("batch-input"),
+  batchBtn: document.getElementById("batch-btn"),
+  batchCsv: document.getElementById("batch-csv"),
+  batchStatus: document.getElementById("batch-status"),
+  batchResult: document.getElementById("batch-result"),
 };
 
 let importedProfile = null;
@@ -197,13 +202,18 @@ els.fixBtn.addEventListener("click", async () => {
     const before = res.headers.get("X-Watertight-Before");
     const after = res.headers.get("X-Watertight-After");
     const openEdges = parseInt(res.headers.get("X-Open-Edges") || "0", 10);
+    const method = res.headers.get("X-Method");
     const residual = after === "True"
       ? ""
       : `<li>Kalan açık kenar: ${openEdges} (manuel onarım gerekebilir)</li>`;
+    const methodLine = method === "meshfix"
+      ? `<li>Yöntem: agresif onarım (pymeshfix)</li>`
+      : "";
     els.fixReport.innerHTML =
       `<strong>Onarım tamamlandı</strong>` +
       `<ul>` +
       `<li>Su sızdırmaz: ${before} → ${after}</li>` +
+      methodLine +
       `<li>Birleştirilen vertex: ${res.headers.get("X-Merged-Vertices")}</li>` +
       `<li>Silinen bozuk yüzey: ${res.headers.get("X-Removed-Degenerate")}</li>` +
       `<li>Delikler kapatıldı: ${res.headers.get("X-Holes-Filled")}</li>` +
@@ -461,3 +471,92 @@ els.exportBtn.addEventListener("click", async () => {
     if (opts.materials.includes("pla")) els.materialSelect.value = "pla";
   } catch (_) { /* options endpoint unavailable */ }
 })();
+
+// ---- batch analysis ----
+let batchRows = [];
+let batchSort = { idx: null, dir: 1 };
+
+const BATCH_COLS = [
+  { label: "Dosya", text: (r) => r.filename, sort: (r) => r.filename || "" },
+  { label: "Boyut (mm)", text: (r) => r.dimensions_mm ? r.dimensions_mm.map((x) => x.toFixed(0)).join("×") : "—",
+    sort: (r) => r.dimensions_mm ? r.dimensions_mm[0] * r.dimensions_mm[1] * r.dimensions_mm[2] : -1 },
+  { label: "Hacim (cm³)", text: (r) => r.volume_cm3 != null ? r.volume_cm3 : "—", sort: (r) => r.volume_cm3 ?? -1 },
+  { label: "Su sızdırmaz", text: (r) => r.error ? "—" : (r.is_watertight ? "Evet" : "Hayır"), sort: (r) => (r.is_watertight ? 1 : 0) },
+  { label: "Gövde", text: (r) => r.body_count ?? "—", sort: (r) => r.body_count ?? -1 },
+  { label: "Overhang %", text: (r) => r.overhang_pct != null ? r.overhang_pct : "—", sort: (r) => r.overhang_pct ?? -1 },
+  { label: "Min duvar", text: (r) => r.min_wall_mm != null ? r.min_wall_mm.toFixed(2) : "—", sort: (r) => r.min_wall_mm ?? -1 },
+  { label: "Sorun", text: (r) => r.error ? "hata" : r.issue_count, sort: (r) => r.error ? 999 : (r.issue_count ?? 0) },
+];
+
+function renderBatch() {
+  if (batchRows.length === 0) { els.batchResult.innerHTML = ""; return; }
+  let rows = batchRows.slice();
+  if (batchSort.idx != null) {
+    const col = BATCH_COLS[batchSort.idx];
+    rows.sort((a, b) => {
+      const va = col.sort(a), vb = col.sort(b);
+      return (va < vb ? -1 : va > vb ? 1 : 0) * batchSort.dir;
+    });
+  }
+  const head = BATCH_COLS.map((c, i) => {
+    const arrow = batchSort.idx === i ? (batchSort.dir === 1 ? " ▲" : " ▼") : "";
+    return `<th data-idx="${i}">${c.label}${arrow}</th>`;
+  }).join("");
+  const body = rows.map((r) => {
+    if (r.error) {
+      return `<tr><td>${r.filename}</td><td colspan="${BATCH_COLS.length - 1}" class="batch-err">${r.error}</td></tr>`;
+    }
+    return "<tr>" + BATCH_COLS.map((c) => `<td>${c.text(r)}</td>`).join("") + "</tr>";
+  }).join("");
+  els.batchResult.innerHTML = `<table class="batch-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
+  els.batchResult.querySelectorAll("th[data-idx]").forEach((th) => {
+    th.addEventListener("click", () => {
+      const idx = parseInt(th.dataset.idx, 10);
+      if (batchSort.idx === idx) batchSort.dir *= -1;
+      else { batchSort.idx = idx; batchSort.dir = 1; }
+      renderBatch();
+    });
+  });
+}
+
+els.batchBtn.addEventListener("click", () => els.batchInput.click());
+els.batchInput.addEventListener("change", async () => {
+  const files = [...els.batchInput.files];
+  if (files.length === 0) return;
+  els.batchStatus.textContent = `${files.length} dosya analiz ediliyor…`;
+  els.batchCsv.hidden = true;
+  const form = new FormData();
+  files.forEach((f) => form.append("files", f));
+  try {
+    const res = await fetch("/api/batch", { method: "POST", body: form });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Toplu analiz başarısız");
+    batchRows = data.results;
+    batchSort = { idx: null, dir: 1 };
+    renderBatch();
+    const ok = batchRows.filter((r) => !r.error).length;
+    els.batchStatus.textContent = `${ok}/${batchRows.length} analiz edildi.`;
+    els.batchCsv.hidden = batchRows.length === 0;
+  } catch (err) {
+    els.batchStatus.textContent = "Hata: " + err.message;
+  }
+});
+
+els.batchCsv.addEventListener("click", () => {
+  const header = BATCH_COLS.map((c) => c.label).join(",");
+  const lines = batchRows.map((r) =>
+    BATCH_COLS.map((c) => {
+      const v = r.error && c.label !== "Dosya" ? "" : String(c.text(r)).replace(/×/g, "x");
+      return /[",]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
+    }).join(","),
+  );
+  const csv = [header, ...lines].join("\n");
+  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "printprep_batch.csv";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+});

@@ -209,6 +209,16 @@ main {
 .swatch-ok { background: #9aa7b8; }
 
 .toggles { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }
+.batch-controls { display: flex; gap: 0.75rem; flex-wrap: wrap; margin: 0.5rem 0; }
+.batch-table { width: 100%; border-collapse: collapse; margin-top: 0.75rem; font-size: 0.85rem; }
+.batch-table th, .batch-table td {
+  text-align: left; padding: 0.45rem 0.6rem; border-bottom: 1px solid var(--border);
+}
+.batch-table th { color: var(--muted); cursor: pointer; user-select: none; white-space: nowrap; }
+.batch-table th:hover { color: var(--accent); }
+.batch-table tbody tr:hover { background: var(--card-2); }
+.batch-err { color: var(--err); }
+
 .body-badge {
   font-size: 0.78rem;
   color: var(--text);

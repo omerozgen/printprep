@@ -11,7 +11,7 @@ import zipfile
 from contextlib import contextmanager
 from dataclasses import asdict
 
-from typing import Optional
+from typing import List, Optional
 
 import trimesh
 from fastapi import FastAPI, File, Form, UploadFile
@@ -144,6 +144,7 @@ def api_fix(model: UploadFile):
         "X-Holes-Filled": str(report.holes_filled),
         "X-Volume-Mm3": f"{report.volume_after:.2f}",
         "X-Open-Edges": str(report.open_edges_after),
+        "X-Method": report.method,
     }
     return StreamingResponse(io.BytesIO(stl_bytes), media_type="model/stl", headers=headers)
 
@@ -170,6 +171,29 @@ def api_orient(model: UploadFile):
         "X-Improved": str(report.improved),
     }
     return StreamingResponse(io.BytesIO(stl_bytes), media_type="model/stl", headers=headers)
+
+
+@app.post("/api/batch")
+def api_batch(files: List[UploadFile] = File(...)):
+    """Analyze multiple uploaded STLs and return a summary row per file."""
+    rows = []
+    for f in files:
+        try:
+            with _uploaded_mesh(f) as mesh:
+                r = analyze(mesh, path=f.filename or "")
+            rows.append({
+                "filename": f.filename,
+                "dimensions_mm": list(r.dimensions_mm),
+                "volume_cm3": round(r.volume_mm3 / 1000, 2),
+                "is_watertight": r.is_watertight,
+                "body_count": r.body_count,
+                "overhang_pct": round(r.overhang_area_fraction * 100, 1),
+                "min_wall_mm": r.min_wall_mm,
+                "issue_count": len(r.issues),
+            })
+        except PrintPrepError as exc:
+            rows.append({"filename": f.filename, "error": str(exc)})
+    return {"results": rows}
 
 
 @app.post("/api/merge")

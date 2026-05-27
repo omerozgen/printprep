@@ -52,6 +52,9 @@ web = [
 merge = [
     "manifold3d>=2.3.0",
 ]
+repair = [
+    "pymeshfix>=0.16.0",
+]
 
 [project.scripts]
 printprep = "printprep.cli:main"
