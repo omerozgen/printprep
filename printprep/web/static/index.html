@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PrintPrep — STL Analiz & Slicer Öneri</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/style.css">
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "/vendor/three.module.js"
+    }
+  }
+  </script>
+</head>
+<body>
+  <header>
+    <h1>PrintPrep</h1>
+    <p class="subtitle">STL model analizi, onarım ve slicer ayar önerisi</p>
+  </header>
+
+  <main>
+    <section id="drop-zone" class="drop-zone">
+      <input type="file" id="file-input" accept=".stl" hidden>
+      <div class="drop-inner">
+        <p class="drop-title">STL dosyanı buraya sürükle</p>
+        <p class="drop-or">veya</p>
+        <button type="button" id="browse-btn" class="btn">Dosya seç</button>
+        <p id="file-name" class="file-name"></p>
+      </div>
+    </section>
+
+    <div id="status" class="status" hidden></div>
+
+    <section id="viewer-section" class="card" hidden>
+      <div class="viewer-head">
+        <h2>3D Önizleme</h2>
+        <div class="toggles">
+          <label class="toggle">
+            <input type="checkbox" id="overhang-toggle" checked> Overhang
+          </label>
+          <label class="toggle">
+            <input type="checkbox" id="holes-toggle" checked> Delikler
+          </label>
+          <label class="toggle">
+            <input type="checkbox" id="thin-toggle"> İnce duvar
+          </label>
+          <label class="toggle">
+            <input type="checkbox" id="bodies-toggle"> Gövdeler
+          </label>
+          <span id="body-badge" class="body-badge" hidden></span>
+        </div>
+      </div>
+      <div id="viewer" class="viewer"></div>
+      <div class="viewer-legend">
+        <span class="legend-item"><span class="swatch swatch-over"></span>Overhang</span>
+        <span class="legend-item"><span class="swatch swatch-thin"></span>İnce duvar (örneklem)</span>
+        <span class="legend-item"><span class="swatch swatch-hole"></span>Delik / açık kenar</span>
+        <span class="legend-item"><span class="swatch swatch-ok"></span>Normal yüzey</span>
+      </div>
+      <p class="viewer-hint">Döndür: sürükle · Yakınlaş: tekerlek · Kaydır: sağ tık-sürükle</p>
+    </section>
+
+    <section id="results" class="card" hidden>
+      <h2>Analiz Sonucu</h2>
+      <div id="props" class="props"></div>
+      <h3>Sorunlar</h3>
+      <ul id="issues" class="issues"></ul>
+
+      <div class="actions">
+        <button type="button" id="fix-btn" class="btn btn-primary">Onar ve indir</button>
+        <button type="button" id="orient-btn" class="btn">En iyi pozisyona yatır</button>
+      </div>
+      <div id="fix-report" class="fix-report" hidden></div>
+      <div id="orient-report" class="fix-report" hidden></div>
+    </section>
+
+    <section id="suggest-section" class="card" hidden>
+      <h2>Slicer Ayar Önerisi</h2>
+      <div class="suggest-controls">
+        <label>Slicer
+          <select id="slicer-select"></select>
+        </label>
+        <label>Malzeme
+          <select id="material-select"></select>
+        </label>
+        <button type="button" id="suggest-btn" class="btn btn-primary">Profil üret</button>
+      </div>
+
+      <div class="import-row">
+        <input type="file" id="profile-input" accept=".json,.ini,.fdm_material,.xml" hidden>
+        <button type="button" id="import-btn" class="btn btn-ghost">Kendi profilini içe aktar</button>
+        <span id="profile-file" class="import-name"></span>
+        <button type="button" id="import-clear" class="btn-link" hidden>temizle</button>
+      </div>
+
+      <div id="profile-result" hidden>
+        <div class="profile-head">
+          <span id="profile-title" class="profile-title"></span>
+          <button type="button" id="copy-json" class="btn-link">JSON kopyala</button>
+        </div>
+        <div id="profile-grid" class="props"></div>
+        <pre id="profile-output" class="profile" hidden></pre>
+
+        <div class="export-row">
+          <label>Aktarım formatı
+            <select id="export-format">
+              <option value="orca">OrcaSlicer / Creality Print / Anycubic Slicer (.json)</option>
+              <option value="prusa">PrusaSlicer / SuperSlicer (.ini)</option>
+            </select>
+          </label>
+          <button type="button" id="export-btn" class="btn">Slicer'a aktar (.zip indir)</button>
+        </div>
+        <span id="export-hint" class="muted-note"></span>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Yerel çalışır · veriler bilgisayarından çıkmaz</p>
+    <p class="footer-src">Malzeme ön ayarları: <a href="https://github.com/SoftFever/OrcaSlicer" target="_blank" rel="noopener">OrcaSlicer</a> açık kaynak filament kütüphanesi · Geometri analizi modelden hesaplanır</p>
+  </footer>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

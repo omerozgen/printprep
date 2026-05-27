@@ -1,0 +1,39 @@
+{
+  "_source": "OrcaSlicer — OrcaFilamentLibrary generic base profiles (resources/profiles/OrcaFilamentLibrary/filament/base/fdm_filament_*.json). Repo: https://github.com/SoftFever/OrcaSlicer (AGPL-3.0).",
+  "_notes": "nozzle_temp_c, bed_temp_c and max_volumetric_speed_mm3s are taken directly from the upstream profiles. In OrcaSlicer retraction is defined at the printer level (filament value 'nil'); only TPU overrides it (0.4mm). retraction values for non-TPU and all retraction speeds are standard direct-drive defaults and are printer-dependent.",
+  "_fetched": "2026-05-27",
+  "materials": {
+    "pla": {
+      "name": "PLA",
+      "nozzle_temp_c": 220,
+      "bed_temp_c": 55,
+      "max_volumetric_speed_mm3s": 12.0,
+      "retraction_mm": 0.8,
+      "retraction_speed_mms": 40
+    },
+    "petg": {
+      "name": "PETG",
+      "nozzle_temp_c": 255,
+      "bed_temp_c": 80,
+      "max_volumetric_speed_mm3s": 10.0,
+      "retraction_mm": 0.8,
+      "retraction_speed_mms": 40
+    },
+    "abs": {
+      "name": "ABS",
+      "nozzle_temp_c": 260,
+      "bed_temp_c": 100,
+      "max_volumetric_speed_mm3s": 12.0,
+      "retraction_mm": 0.8,
+      "retraction_speed_mms": 40
+    },
+    "tpu": {
+      "name": "TPU",
+      "nozzle_temp_c": 240,
+      "bed_temp_c": 35,
+      "max_volumetric_speed_mm3s": 3.2,
+      "retraction_mm": 0.4,
+      "retraction_speed_mms": 20
+    }
+  }
+}
