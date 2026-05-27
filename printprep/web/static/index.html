@@ -49,6 +49,9 @@
           <label class="toggle">
             <input type="checkbox" id="bodies-toggle"> Gövdeler
           </label>
+          <label class="toggle">
+            <input type="checkbox" id="inverted-toggle"> Ters yüzey
+          </label>
           <span id="body-badge" class="body-badge" hidden></span>
         </div>
       </div>
@@ -57,6 +60,7 @@
         <span class="legend-item"><span class="swatch swatch-over"></span>Overhang</span>
         <span class="legend-item"><span class="swatch swatch-thin"></span>İnce duvar (örneklem)</span>
         <span class="legend-item"><span class="swatch swatch-hole"></span>Delik / açık kenar</span>
+        <span class="legend-item"><span class="swatch swatch-inv"></span>Ters yüzey (winding)</span>
         <span class="legend-item"><span class="swatch swatch-ok"></span>Normal yüzey</span>
       </div>
       <p class="viewer-hint">Döndür: sürükle · Yakınlaş: tekerlek · Kaydır: sağ tık-sürükle</p>
@@ -71,9 +75,11 @@
       <div class="actions">
         <button type="button" id="fix-btn" class="btn btn-primary">Onar ve indir</button>
         <button type="button" id="orient-btn" class="btn">En iyi pozisyona yatır</button>
+        <button type="button" id="merge-btn" class="btn">Tek parçaya birleştir</button>
       </div>
       <div id="fix-report" class="fix-report" hidden></div>
       <div id="orient-report" class="fix-report" hidden></div>
+      <div id="merge-report" class="fix-report" hidden></div>
     </section>
 
     <section id="suggest-section" class="card" hidden>

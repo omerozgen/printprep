@@ -1,7 +1,10 @@
 """PrintPrep command-line interface."""
 
+import glob
+import json as _json
 import os
 import sys
+from dataclasses import asdict
 
 import click
 from rich.console import Console
@@ -9,7 +12,7 @@ from rich.table import Table
 
 from printprep import PrintPrepError, __version__
 from printprep.config.presets import MATERIAL_PRESETS
-from printprep.core import analyze, load_mesh, repair_mesh, suggest_orientation
+from printprep.core import analyze, load_mesh, merge_to_single, repair_mesh, suggest_orientation
 from printprep.slicer import (
     EXPORT_FORMATS,
     SLICER_NAMES,
@@ -110,7 +113,10 @@ def fix(path, output):
     if report.watertight_after:
         console.print("[bold green]Status: READY FOR SLICING[/bold green]")
     else:
-        console.print("[bold yellow]Status: still not watertight — manual repair may be needed.[/bold yellow]")
+        console.print(
+            f"[bold yellow]Status: still not watertight — {report.open_edges_after} open "
+            f"edge(s) remain; manual repair may be needed.[/bold yellow]"
+        )
 
 
 @main.command(help="Suggest slicer settings as a JSON profile.")
@@ -191,6 +197,89 @@ def orient(path, output):
     else:
         console.print("[yellow]Current orientation is already optimal — no rotation applied.[/yellow]")
     console.print(f"Output: [cyan]{output}[/cyan]")
+
+
+@main.command(help="Merge separate bodies into a single piece and write an STL.")
+@click.argument("path", type=click.Path())
+@click.option("--output", "-o", required=True, type=click.Path(),
+              help="Where to write the merged STL.")
+def merge(path, output):
+    try:
+        mesh = load_mesh(path)
+    except PrintPrepError as exc:
+        err_console.print(str(exc))
+        sys.exit(1)
+
+    merged, report = merge_to_single(mesh)
+    try:
+        merged.export(output)
+    except Exception as exc:
+        err_console.print(f"Could not write '{output}': {exc}")
+        sys.exit(1)
+
+    console.print("[bold]Merge:[/bold]")
+    console.print(f"  Method: {report.method}")
+    console.print(f"  Bodies: {report.bodies_before} → {report.bodies_after}")
+    console.print(f"  Watertight: {report.watertight_after}  |  Volume: {report.volume_after / 1000:.2f} cm³")
+    console.print(f"[dim]{report.note}[/dim]")
+    console.print(f"Output: [cyan]{output}[/cyan]")
+
+
+@main.command(help="Analyze every STL in a folder and print a summary.")
+@click.argument("directory", type=click.Path())
+@click.option("--pattern", default="*.stl", show_default=True, help="Glob pattern to match.")
+@click.option("--recursive", "-r", is_flag=True, help="Search sub-folders too.")
+@click.option("--json", "json_out", type=click.Path(), help="Write full results as JSON.")
+def batch(directory, pattern, recursive, json_out):
+    if not os.path.isdir(directory):
+        err_console.print(f"Not a directory: {directory}")
+        sys.exit(1)
+
+    if recursive:
+        files = glob.glob(os.path.join(directory, "**", pattern), recursive=True)
+    else:
+        files = glob.glob(os.path.join(directory, pattern))
+    files = sorted(f for f in files if os.path.isfile(f))
+    if not files:
+        err_console.print(f"No files matching '{pattern}' in {directory}")
+        sys.exit(1)
+
+    table = Table(title=f"Batch analysis — {directory}", title_style="bold cyan")
+    table.add_column("File", style="cyan", overflow="fold")
+    table.add_column("Size (mm)", justify="right")
+    table.add_column("Vol (cm³)", justify="right")
+    table.add_column("Watertight", justify="center")
+    table.add_column("Bodies", justify="right")
+    table.add_column("Issues", justify="right")
+
+    results = []
+    for path in files:
+        name = os.path.basename(path)
+        try:
+            result = analyze(load_mesh(path), path=path)
+        except PrintPrepError as exc:
+            table.add_row(name, "[red]error[/red]", "-", "-", "-", str(exc)[:40])
+            results.append({"path": path, "error": str(exc)})
+            continue
+        dx, dy, dz = result.dimensions_mm
+        table.add_row(
+            name,
+            f"{dx:.0f}×{dy:.0f}×{dz:.0f}",
+            f"{result.volume_mm3 / 1000:.1f}",
+            "[green]Yes[/green]" if result.is_watertight else "[red]No[/red]",
+            str(result.body_count),
+            str(len(result.issues)),
+        )
+        results.append(asdict(result))
+
+    console.print(table)
+    ok = sum(1 for r in results if "error" not in r)
+    console.print(f"\n{ok}/{len(files)} analyzed successfully.")
+
+    if json_out:
+        with open(json_out, "w", encoding="utf-8") as fh:
+            _json.dump(results, fh, indent=2)
+        console.print(f"Full results: [cyan]{json_out}[/cyan]")
 
 
 @main.command(help="Launch the local web interface (browser UI).")

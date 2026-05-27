@@ -81,6 +81,14 @@ def test_export_orca_zip(clean_cube):
     assert any(n.endswith("_process.json") for n in names)
 
 
+def test_merge(broken_cube):
+    r = client.post("/api/merge", files=_file(broken_cube, "broken.stl"))
+    assert r.status_code == 200
+    assert r.headers["x-method"] in ("boolean", "concatenate")
+    assert "x-bodies-after" in r.headers
+    assert len(r.content) > 0
+
+
 def test_export_unknown_format_rejected(clean_cube):
     r = client.post("/api/export", data={"slicer": "creality", "material": "pla", "fmt": "cura"},
                     files=_file(clean_cube))

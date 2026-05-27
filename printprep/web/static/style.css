@@ -205,6 +205,7 @@ main {
 .swatch-over { background: #f85149; }
 .swatch-thin { background: #e3b341; }
 .swatch-hole { background: #ff5cf4; }
+.swatch-inv { background: #ff3344; }
 .swatch-ok { background: #9aa7b8; }
 
 .toggles { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }

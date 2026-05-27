@@ -29,6 +29,12 @@ printprep fix model.stl --output fixed_model.stl
 # En iyi baskı pozisyonuna yatır
 printprep orient model.stl --output oriented_model.stl
 
+# Ayrı gövdeleri tek parçaya birleştir (boolean union için: pip install -e ".[merge]")
+printprep merge model.stl --output merged_model.stl
+
+# Bir klasördeki tüm STL'leri toplu analiz et
+printprep batch ./models --json report.json
+
 # Slicer ayar önerisi
 printprep suggest model.stl --slicer creality --material pla
 
@@ -74,8 +80,11 @@ source venv/bin/activate  # macOS/Linux
 # Dependencies
 pip install -e ".[dev]"
 
-# Test
+# Test (Python)
 pytest
+
+# Test (3D viewer geometri yardımcıları, Node 18+)
+node --test tests/js/geometry-utils.test.mjs
 ```
 
 ## Desteklenen Slicers

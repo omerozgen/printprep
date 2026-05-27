@@ -1,6 +1,6 @@
 "use strict";
 
-import { loadModelFromFile, setOverhang, setHoles, setThin, setBodies, getBodyCount } from "./viewer.js";
+import { loadModelFromFile, setOverhang, setHoles, setThin, setBodies, setInverted, getBodyCount } from "./viewer.js";
 
 let currentFile = null;
 
@@ -15,6 +15,7 @@ const els = {
   holesToggle: document.getElementById("holes-toggle"),
   thinToggle: document.getElementById("thin-toggle"),
   bodiesToggle: document.getElementById("bodies-toggle"),
+  invertedToggle: document.getElementById("inverted-toggle"),
   bodyBadge: document.getElementById("body-badge"),
   results: document.getElementById("results"),
   props: document.getElementById("props"),
@@ -23,6 +24,8 @@ const els = {
   fixReport: document.getElementById("fix-report"),
   orientBtn: document.getElementById("orient-btn"),
   orientReport: document.getElementById("orient-report"),
+  mergeBtn: document.getElementById("merge-btn"),
+  mergeReport: document.getElementById("merge-report"),
   suggestSection: document.getElementById("suggest-section"),
   slicerSelect: document.getElementById("slicer-select"),
   materialSelect: document.getElementById("material-select"),
@@ -83,6 +86,7 @@ function handleFile(file) {
   els.fileName.textContent = file.name;
   els.fixReport.hidden = true;
   els.orientReport.hidden = true;
+  els.mergeReport.hidden = true;
   els.profileResult.hidden = true;
   els.viewerSection.hidden = false;
   els.bodyBadge.hidden = true;
@@ -100,6 +104,7 @@ function handleFile(file) {
 
 els.overhangToggle.addEventListener("change", () => setOverhang(els.overhangToggle.checked));
 els.bodiesToggle.addEventListener("change", () => setBodies(els.bodiesToggle.checked));
+els.invertedToggle.addEventListener("change", () => setInverted(els.invertedToggle.checked));
 els.holesToggle.addEventListener("change", () => setHoles(els.holesToggle.checked));
 els.thinToggle.addEventListener("change", () => {
   if (els.thinToggle.checked) showStatus("İnce duvar hesaplanıyor…", false);
@@ -191,6 +196,10 @@ els.fixBtn.addEventListener("click", async () => {
 
     const before = res.headers.get("X-Watertight-Before");
     const after = res.headers.get("X-Watertight-After");
+    const openEdges = parseInt(res.headers.get("X-Open-Edges") || "0", 10);
+    const residual = after === "True"
+      ? ""
+      : `<li>Kalan açık kenar: ${openEdges} (manuel onarım gerekebilir)</li>`;
     els.fixReport.innerHTML =
       `<strong>Onarım tamamlandı</strong>` +
       `<ul>` +
@@ -199,6 +208,7 @@ els.fixBtn.addEventListener("click", async () => {
       `<li>Silinen bozuk yüzey: ${res.headers.get("X-Removed-Degenerate")}</li>` +
       `<li>Delikler kapatıldı: ${res.headers.get("X-Holes-Filled")}</li>` +
       `<li>Hacim: ${(parseFloat(res.headers.get("X-Volume-Mm3")) / 1000).toFixed(2)} cm³</li>` +
+      residual +
       `</ul>`;
     els.fixReport.hidden = false;
 
@@ -265,6 +275,55 @@ els.orientBtn.addEventListener("click", async () => {
     showStatus(err.message, true);
   } finally {
     els.orientBtn.disabled = false;
+  }
+});
+
+// ---- merge separate bodies into one piece ----
+els.mergeBtn.addEventListener("click", async () => {
+  if (!currentFile) return;
+  els.mergeBtn.disabled = true;
+  showStatus("Tek parçaya birleştiriliyor…", false);
+  const form = new FormData();
+  form.append("model", currentFile);
+  try {
+    const res = await fetch("/api/merge", { method: "POST", body: form });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || "Birleştirme başarısız");
+    }
+    const blob = await res.blob();
+    const method = res.headers.get("X-Method");
+    const before = res.headers.get("X-Bodies-Before");
+    const after = res.headers.get("X-Bodies-After");
+    const watertight = res.headers.get("X-Watertight-After");
+    const methodTr = method === "boolean" ? "boolean union (gerçek kaynaşma)" : "tek dosyada birleştirme";
+    els.mergeReport.innerHTML =
+      `<strong>Birleştirme tamamlandı</strong><ul>` +
+      `<li>Yöntem: ${methodTr}</li>` +
+      `<li>Gövde: ${before} → ${after}</li>` +
+      `<li>Su sızdırmaz: ${watertight}</li>` +
+      `</ul><span class="muted-note">3D önizleme birleşmiş modeli gösteriyor. STL indirildi.</span>`;
+    els.mergeReport.hidden = false;
+
+    loadModelFromFile(blob).then(() => {
+      els.bodyBadge.textContent = `${getBodyCount()} gövde`;
+      els.bodyBadge.hidden = false;
+    }).catch(() => {});
+
+    const name = (currentFile.name.replace(/\.stl$/i, "") || "model") + "_merged.stl";
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    hideStatus();
+  } catch (err) {
+    showStatus(err.message, true);
+  } finally {
+    els.mergeBtn.disabled = false;
   }
 });
 

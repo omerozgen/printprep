@@ -13,3 +13,9 @@ def test_repair_report_counts(broken_cube):
     _, report = repair_mesh(broken_cube)
     assert report.watertight_before is False
     assert report.holes_filled is True
+
+
+def test_repair_reports_no_open_edges_when_watertight(broken_cube):
+    _, report = repair_mesh(broken_cube)
+    assert report.watertight_after is True
+    assert report.open_edges_after == 0

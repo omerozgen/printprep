@@ -3,6 +3,7 @@
 import * as THREE from "three";
 import { STLLoader } from "./vendor/addons/STLLoader.js";
 import { OrbitControls } from "./vendor/addons/OrbitControls.js";
+import { connectedComponents, overhangFlags, openEdges as findOpenEdges } from "./geometry-utils.js";
 
 const NEUTRAL = new THREE.Color(0x9aa7b8);
 const OVERHANG = new THREE.Color(0xf85149);
@@ -15,9 +16,10 @@ let mesh = null;
 let grid = null;
 let geometry = null;
 let openEdges = null;
+let invertedMesh = null;
 let initialized = false;
 
-const state = { overhang: true, thin: false, holes: true, bodies: false };
+const state = { overhang: true, thin: false, holes: true, bodies: false, inverted: false };
 let thinFaces = null; // Set of face-start indices; null = not computed yet
 let bodyOfFace = null; // Int32Array[F] -> body index; null = not computed
 let bodyCount = 0;
@@ -78,32 +80,16 @@ function colorize() {
   const count = pos.count;
   const colors = new Float32Array(count * 3);
 
-  let minZ = Infinity, maxZ = -Infinity;
-  for (let i = 0; i < count; i++) {
-    const z = pos.getZ(i);
-    if (z < minZ) minZ = z;
-    if (z > maxZ) maxZ = z;
-  }
-  const tol = 1e-6 + 1e-3 * (maxZ - minZ);
-  const sinT = Math.sin((OVERHANG_THRESHOLD_DEG * Math.PI) / 180);
-
-  const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
-  const ab = new THREE.Vector3(), ac = new THREE.Vector3(), n = new THREE.Vector3();
+  const oflags = state.overhang ? overhangFlags(pos.array, count, OVERHANG_THRESHOLD_DEG) : null;
 
   for (let f = 0; f < count; f += 3) {
+    const fi = f / 3;
     let col;
     if (state.bodies && bodyOfFace) {
       // body view: color each connected body distinctly (overrides issue colors)
-      col = bodyColors[bodyOfFace[f / 3]] || NEUTRAL;
+      col = bodyColors[bodyOfFace[fi]] || NEUTRAL;
     } else {
-      a.fromBufferAttribute(pos, f);
-      b.fromBufferAttribute(pos, f + 1);
-      c.fromBufferAttribute(pos, f + 2);
-      ab.subVectors(b, a);
-      ac.subVectors(c, a);
-      n.crossVectors(ab, ac).normalize();
-      const cz = (a.z + b.z + c.z) / 3;
-      const isOver = state.overhang && n.z < -sinT && cz > minZ + tol;
+      const isOver = oflags && oflags[fi];
       const isThin = state.thin && thinFaces && thinFaces.has(f);
       col = isOver ? OVERHANG : (isThin ? THIN : NEUTRAL);
     }
@@ -120,38 +106,10 @@ function colorize() {
 // ---- connected components (separate bodies) via union-find on welded verts ----
 function computeBodies() {
   const pos = geometry.attributes.position;
-  const count = pos.count;
-  const faceN = count / 3;
   const q = Math.max(1e-5, (geometry.boundingSphere?.radius || 1) * 1e-5);
-
-  const keyToId = new Map();
-  const canon = new Int32Array(count);
-  let nextId = 0;
-  for (let i = 0; i < count; i++) {
-    const k = `${Math.round(pos.getX(i) / q)},${Math.round(pos.getY(i) / q)},${Math.round(pos.getZ(i) / q)}`;
-    let id = keyToId.get(k);
-    if (id === undefined) { id = nextId++; keyToId.set(k, id); }
-    canon[i] = id;
-  }
-
-  const parent = new Int32Array(nextId);
-  for (let i = 0; i < nextId; i++) parent[i] = i;
-  const find = (x) => { while (parent[x] !== x) { parent[x] = parent[parent[x]]; x = parent[x]; } return x; };
-  const union = (x, y) => { const a = find(x), b = find(y); if (a !== b) parent[a] = b; };
-  for (let f = 0; f < count; f += 3) {
-    union(canon[f], canon[f + 1]);
-    union(canon[f + 1], canon[f + 2]);
-  }
-
-  const rootToBody = new Map();
-  bodyOfFace = new Int32Array(faceN);
-  for (let fi = 0; fi < faceN; fi++) {
-    const r = find(canon[fi * 3]);
-    let b = rootToBody.get(r);
-    if (b === undefined) { b = rootToBody.size; rootToBody.set(r, b); }
-    bodyOfFace[fi] = b;
-  }
-  bodyCount = rootToBody.size;
+  const result = connectedComponents(pos.array, pos.count, q);
+  bodyOfFace = result.bodyOfFace;
+  bodyCount = result.bodyCount;
   bodyColors = Array.from({ length: bodyCount }, (_, i) => bodyColorFor(i));
 }
 
@@ -165,30 +123,13 @@ function buildOpenEdges() {
   }
   const pos = geometry.attributes.position;
   const q = Math.max(1e-5, (geometry.boundingSphere?.radius || 1) * 1e-5);
-  const keyOf = (i) =>
-    `${Math.round(pos.getX(i) / q)},${Math.round(pos.getY(i) / q)},${Math.round(pos.getZ(i) / q)}`;
-
-  const edges = new Map();
-  const count = pos.count;
-  for (let f = 0; f < count; f += 3) {
-    const idx = [f, f + 1, f + 2];
-    for (let e = 0; e < 3; e++) {
-      const i1 = idx[e], i2 = idx[(e + 1) % 3];
-      const k1 = keyOf(i1), k2 = keyOf(i2);
-      const ek = k1 < k2 ? `${k1}|${k2}` : `${k2}|${k1}`;
-      const rec = edges.get(ek);
-      if (rec) rec.count++;
-      else edges.set(ek, { count: 1, i1, i2 });
-    }
-  }
+  const boundary = findOpenEdges(pos.array, pos.count, q);
 
   const verts = [];
-  edges.forEach((r) => {
-    if (r.count === 1) {
-      verts.push(pos.getX(r.i1), pos.getY(r.i1), pos.getZ(r.i1),
-                 pos.getX(r.i2), pos.getY(r.i2), pos.getZ(r.i2));
-    }
-  });
+  for (const [i1, i2] of boundary) {
+    verts.push(pos.getX(i1), pos.getY(i1), pos.getZ(i1),
+               pos.getX(i2), pos.getY(i2), pos.getZ(i2));
+  }
 
   if (verts.length === 0) return;
   const g = new THREE.BufferGeometry();
@@ -294,6 +235,7 @@ export function loadModelFromFile(file) {
         mesh = new THREE.Mesh(geometry, material);
         scene.add(mesh);
         buildOpenEdges();
+        applyInverted();
         frameCamera();
         resolve();
       } catch (err) {
@@ -324,6 +266,37 @@ export function setThin(enabled) {
 export function setBodies(enabled) {
   state.bodies = enabled;
   colorize();
+}
+
+// Reversed-winding highlight: render back-faces in red. On a correctly wound
+// solid the back-faces are interior (hidden); where the winding is flipped the
+// surface's inside faces outward, so it shows up red. Always well-defined.
+function applyInverted() {
+  if (invertedMesh) {
+    scene.remove(invertedMesh);
+    invertedMesh.material.dispose();
+    invertedMesh = null;
+  }
+  if (!mesh) return;
+  if (state.inverted) {
+    mesh.material.side = THREE.FrontSide;
+    invertedMesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({
+      color: 0xff3344,
+      side: THREE.BackSide,
+      polygonOffset: true,
+      polygonOffsetFactor: 1,
+      polygonOffsetUnits: 1,
+    }));
+    invertedMesh.renderOrder = 1;
+    scene.add(invertedMesh);
+  } else {
+    mesh.material.side = THREE.DoubleSide;
+  }
+}
+
+export function setInverted(enabled) {
+  state.inverted = enabled;
+  applyInverted();
 }
 
 export function getBodyCount() {

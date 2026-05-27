@@ -49,6 +49,9 @@ web = [
     "uvicorn[standard]>=0.27.0",
     "python-multipart>=0.0.9",
 ]
+merge = [
+    "manifold3d>=2.3.0",
+]
 
 [project.scripts]
 printprep = "printprep.cli:main"

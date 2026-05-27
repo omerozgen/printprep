@@ -20,7 +20,7 @@ from fastapi.staticfiles import StaticFiles
 
 from printprep import PrintPrepError, __version__
 from printprep.config.presets import MATERIAL_PRESETS
-from printprep.core import analyze, load_mesh, repair_mesh, suggest_orientation
+from printprep.core import analyze, load_mesh, merge_to_single, repair_mesh, suggest_orientation
 from printprep.slicer import (
     EXPORT_FORMATS,
     SLICER_NAMES,
@@ -143,6 +143,7 @@ def api_fix(model: UploadFile):
         "X-Removed-Duplicate": str(report.removed_duplicate),
         "X-Holes-Filled": str(report.holes_filled),
         "X-Volume-Mm3": f"{report.volume_after:.2f}",
+        "X-Open-Edges": str(report.open_edges_after),
     }
     return StreamingResponse(io.BytesIO(stl_bytes), media_type="model/stl", headers=headers)
 
@@ -167,6 +168,29 @@ def api_orient(model: UploadFile):
         "X-Overhang-Before": f"{report.overhang_before:.4f}",
         "X-Overhang-After": f"{report.overhang_after:.4f}",
         "X-Improved": str(report.improved),
+    }
+    return StreamingResponse(io.BytesIO(stl_bytes), media_type="model/stl", headers=headers)
+
+
+@app.post("/api/merge")
+def api_merge(model: UploadFile):
+    try:
+        with _uploaded_mesh(model) as mesh:
+            merged, report = merge_to_single(mesh)
+            stl_bytes = merged.export(file_type="stl")
+    except PrintPrepError as exc:
+        return JSONResponse(status_code=400, content={"error": str(exc)})
+
+    if isinstance(stl_bytes, str):
+        stl_bytes = stl_bytes.encode()
+
+    base = os.path.splitext(model.filename or "model.stl")[0]
+    headers = {
+        "Content-Disposition": f'attachment; filename="{base}_merged.stl"',
+        "X-Method": report.method,
+        "X-Bodies-Before": str(report.bodies_before),
+        "X-Bodies-After": str(report.bodies_after),
+        "X-Watertight-After": str(report.watertight_after),
     }
     return StreamingResponse(io.BytesIO(stl_bytes), media_type="model/stl", headers=headers)
 
