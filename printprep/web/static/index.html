@@ -64,6 +64,30 @@
         <span class="legend-item"><span class="swatch swatch-ok"></span>Normal yüzey</span>
       </div>
       <p class="viewer-hint">Döndür: sürükle · Yakınlaş: tekerlek · Kaydır: sağ tık-sürükle</p>
+
+      <div class="viewer-tools">
+        <div class="tool-block">
+          <label class="toggle"><input type="checkbox" id="measure-toggle"> 📏 Ölçüm modu</label>
+          <button type="button" id="measure-clear" class="btn-link" hidden>temizle</button>
+          <p class="muted-note" id="measure-hint" hidden>Modelde iki noktaya tıkla — mesafeyi gösterir.</p>
+          <ol id="measure-list" class="measure-list"></ol>
+        </div>
+        <div class="tool-block">
+          <label class="toggle"><input type="checkbox" id="clip-toggle"> ✂️ Kesit</label>
+          <div class="clip-row" id="clip-controls" hidden>
+            <label>Eksen
+              <select id="clip-axis">
+                <option value="z" selected>Z (yatay düzlem)</option>
+                <option value="y">Y</option>
+                <option value="x">X</option>
+              </select>
+            </label>
+            <input type="range" id="clip-slider" step="0.1">
+            <span id="clip-value" class="muted-note">—</span>
+            <label class="toggle"><input type="checkbox" id="clip-flip"> Diğer taraf</label>
+          </div>
+        </div>
+      </div>
     </section>
 
     <section id="results" class="card" hidden>

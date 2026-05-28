@@ -225,6 +225,33 @@ main {
 .swatch-ok { background: #9aa7b8; }
 
 .toggles { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }
+
+.viewer-tools {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+.tool-block { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
+.clip-row { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; flex: 1; }
+.clip-row input[type="range"] { flex: 1; min-width: 160px; accent-color: var(--accent); }
+.clip-row select {
+  background: var(--card-2); color: var(--text);
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: 0.35rem 0.5rem; font-size: 0.85rem;
+}
+.measure-list {
+  list-style: decimal inside; margin: 0; padding: 0;
+  color: var(--text); font-size: 0.85rem;
+  display: flex; gap: 0.8rem; flex-wrap: wrap;
+}
+.measure-list li {
+  background: rgba(253, 224, 71, 0.12);
+  border: 1px solid rgba(253, 224, 71, 0.4);
+  padding: 0.2rem 0.55rem; border-radius: 6px;
+}
 .batch-controls { display: flex; gap: 0.75rem; flex-wrap: wrap; margin: 0.5rem 0; }
 .batch-table { width: 100%; border-collapse: collapse; margin-top: 0.75rem; font-size: 0.85rem; }
 .batch-table th, .batch-table td {

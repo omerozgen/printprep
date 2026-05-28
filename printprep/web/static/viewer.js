@@ -19,6 +19,18 @@ let openEdges = null;
 let invertedMesh = null;
 let initialized = false;
 
+// Measurement state
+let measureMode = false;
+let measurePending = null;     // first point of an in-progress measurement
+let measurements = [];         // [{a, b, distance_mm, group}] group = THREE.Group of markers+line
+let measureRoot = null;
+
+// Cross-section state
+let clipPlane = null;          // THREE.Plane; null when disabled
+let clipAxis = "z";            // 'x'|'y'|'z'
+let clipPosition = 0;          // world coord on that axis
+let clipFlip = false;
+
 const state = { overhang: true, thin: false, holes: true, bodies: false, inverted: false };
 let thinFaces = null; // Set of face-start indices; null = not computed yet
 let bodyOfFace = null; // Int32Array[F] -> body index; null = not computed
@@ -55,6 +67,31 @@ function init(el) {
   controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.dampingFactor = 0.1;
+
+  renderer.localClippingEnabled = true;
+
+  measureRoot = new THREE.Group();
+  measureRoot.renderOrder = 3;
+  scene.add(measureRoot);
+
+  // Click-vs-drag detection so OrbitControls still rotates with a real drag.
+  let downX = 0, downY = 0;
+  renderer.domElement.addEventListener("pointerdown", (e) => {
+    downX = e.clientX; downY = e.clientY;
+  });
+  renderer.domElement.addEventListener("pointerup", (e) => {
+    const dx = e.clientX - downX, dy = e.clientY - downY;
+    if (!measureMode || !mesh || dx * dx + dy * dy > 25) return;
+    const rect = renderer.domElement.getBoundingClientRect();
+    const ndc = new THREE.Vector2(
+      ((e.clientX - rect.left) / rect.width) * 2 - 1,
+      -((e.clientY - rect.top) / rect.height) * 2 + 1,
+    );
+    const ray = new THREE.Raycaster();
+    ray.setFromCamera(ndc, camera);
+    const hits = ray.intersectObject(mesh, false);
+    if (hits.length) addMeasurePoint(hits[0].point.clone());
+  });
 
   new ResizeObserver(onResize).observe(container);
   animate();
@@ -236,6 +273,8 @@ export function loadModelFromFile(file) {
         scene.add(mesh);
         buildOpenEdges();
         applyInverted();
+        clearMeasurements();
+        _applyClippingToMaterials();
         frameCamera();
         resolve();
       } catch (err) {
@@ -301,4 +340,121 @@ export function setInverted(enabled) {
 
 export function getBodyCount() {
   return bodyCount;
+}
+
+// ---- measurement tool ----
+function markerSize() {
+  const r = (geometry && geometry.boundingSphere?.radius) || 10;
+  return Math.max(0.3, r * 0.012);
+}
+
+function addMeasurePoint(point) {
+  const radius = markerSize();
+  const marker = new THREE.Mesh(
+    new THREE.SphereGeometry(radius, 16, 12),
+    new THREE.MeshBasicMaterial({ color: 0xfde047, depthTest: false }),
+  );
+  marker.position.copy(point);
+  marker.renderOrder = 4;
+
+  if (!measurePending) {
+    const grp = new THREE.Group();
+    grp.add(marker);
+    measureRoot.add(grp);
+    measurePending = { a: point, group: grp };
+    return;
+  }
+
+  // Second click finalises the measurement.
+  measurePending.group.add(marker);
+  const a = measurePending.a, b = point;
+  const lineGeom = new THREE.BufferGeometry().setFromPoints([a, b]);
+  const line = new THREE.Line(
+    lineGeom,
+    new THREE.LineBasicMaterial({ color: 0xfde047, depthTest: false }),
+  );
+  line.renderOrder = 4;
+  measurePending.group.add(line);
+
+  const distance = a.distanceTo(b);
+  measurements.push({
+    a: { x: a.x, y: a.y, z: a.z },
+    b: { x: b.x, y: b.y, z: b.z },
+    distance_mm: distance,
+    group: measurePending.group,
+  });
+  measurePending = null;
+  if (window.__printprepOnMeasure) window.__printprepOnMeasure();
+}
+
+export function setMeasureMode(enabled) {
+  measureMode = !!enabled;
+  if (controls) controls.enabled = !measureMode || true; // keep orbit working alongside
+  document.body.style.cursor = measureMode ? "crosshair" : "";
+}
+
+export function clearMeasurements() {
+  for (const m of measurements) {
+    measureRoot.remove(m.group);
+    m.group.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); });
+  }
+  if (measurePending) {
+    measureRoot.remove(measurePending.group);
+    measurePending.group.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); });
+    measurePending = null;
+  }
+  measurements = [];
+  if (window.__printprepOnMeasure) window.__printprepOnMeasure();
+}
+
+export function getMeasurements() {
+  return measurements.map((m, i) => ({
+    index: i + 1, distance_mm: m.distance_mm,
+  }));
+}
+
+// ---- cross-section (clipping plane) ----
+function _axisNormal(axis, flip) {
+  const v = new THREE.Vector3(
+    axis === "x" ? 1 : 0,
+    axis === "y" ? 1 : 0,
+    axis === "z" ? 1 : 0,
+  );
+  // Plane equation in three.js: n.x + constant = 0; clip where n.x + constant > 0.
+  // To keep the "low" side (e.g. z <= position): normal = (0,0,1), constant = -position.
+  // To keep the "high" side: flip the normal.
+  return flip ? v : v.multiplyScalar(-1);
+}
+
+function _applyClippingToMaterials() {
+  const planes = clipPlane ? [clipPlane] : [];
+  if (mesh) mesh.material.clippingPlanes = planes;
+  if (openEdges) openEdges.material.clippingPlanes = planes;
+  if (invertedMesh) invertedMesh.material.clippingPlanes = planes;
+}
+
+export function setClipping(enabled, axis, position, flip) {
+  if (axis) clipAxis = axis;
+  if (typeof position === "number") clipPosition = position;
+  if (typeof flip === "boolean") clipFlip = flip;
+  if (!enabled) {
+    clipPlane = null;
+  } else {
+    const n = _axisNormal(clipAxis, clipFlip);
+    // n.x + constant = 0 at the plane; for axis=z, n=(0,0,-1)+flip flips sign.
+    // We want plane at coord=position. With normal (0,0,-1): -z + c = 0 -> z = c -> constant = position.
+    // With normal (0,0,+1) (flipped): z + c = 0 -> z = -c -> constant = -position.
+    const constant = clipFlip ? -clipPosition : clipPosition;
+    clipPlane = new THREE.Plane(n, constant);
+  }
+  _applyClippingToMaterials();
+}
+
+export function getModelBounds() {
+  if (!geometry) return null;
+  const b = geometry.boundingBox || geometry.computeBoundingBox() || geometry.boundingBox;
+  return {
+    min: { x: b.min.x, y: b.min.y, z: b.min.z },
+    max: { x: b.max.x, y: b.max.y, z: b.max.z },
+  };
 }

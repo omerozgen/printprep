@@ -1,6 +1,10 @@
 "use strict";
 
-import { loadModelFromFile, setOverhang, setHoles, setThin, setBodies, setInverted, getBodyCount } from "./viewer.js";
+import {
+  loadModelFromFile, setOverhang, setHoles, setThin, setBodies, setInverted,
+  getBodyCount, setMeasureMode, clearMeasurements, getMeasurements,
+  setClipping, getModelBounds,
+} from "./viewer.js";
 
 let currentFile = null;
 let originalFile = null;     // what the user uploaded (for the before/after toggle)
@@ -20,6 +24,16 @@ const els = {
   bodiesToggle: document.getElementById("bodies-toggle"),
   invertedToggle: document.getElementById("inverted-toggle"),
   bodyBadge: document.getElementById("body-badge"),
+  measureToggle: document.getElementById("measure-toggle"),
+  measureClear: document.getElementById("measure-clear"),
+  measureHint: document.getElementById("measure-hint"),
+  measureList: document.getElementById("measure-list"),
+  clipToggle: document.getElementById("clip-toggle"),
+  clipControls: document.getElementById("clip-controls"),
+  clipAxis: document.getElementById("clip-axis"),
+  clipSlider: document.getElementById("clip-slider"),
+  clipValue: document.getElementById("clip-value"),
+  clipFlip: document.getElementById("clip-flip"),
   results: document.getElementById("results"),
   props: document.getElementById("props"),
   issues: document.getElementById("issues"),
@@ -125,6 +139,13 @@ function handleFile(file) {
   els.viewerSection.hidden = false;
   els.bodyBadge.hidden = true;
   els.bodiesToggle.checked = false;
+  els.measureToggle.checked = false;
+  els.measureHint.hidden = true;
+  els.clipToggle.checked = false;
+  els.clipControls.hidden = true;
+  delete els.clipSlider.dataset.axis;
+  els.measureList.innerHTML = "";
+  els.measureClear.hidden = true;
   loadModelFromFile(file)
     .then(() => {
       const n = getBodyCount();
@@ -139,6 +160,51 @@ function handleFile(file) {
 els.overhangToggle.addEventListener("change", () => setOverhang(els.overhangToggle.checked));
 els.bodiesToggle.addEventListener("change", () => setBodies(els.bodiesToggle.checked));
 els.invertedToggle.addEventListener("change", () => setInverted(els.invertedToggle.checked));
+
+// ---- measurement tool ----
+function renderMeasurements() {
+  const list = getMeasurements();
+  els.measureList.innerHTML = list
+    .map((m) => `<li>${m.distance_mm.toFixed(2)} mm</li>`).join("");
+  els.measureClear.hidden = list.length === 0;
+}
+window.__printprepOnMeasure = renderMeasurements;
+
+els.measureToggle.addEventListener("change", () => {
+  const on = els.measureToggle.checked;
+  setMeasureMode(on);
+  els.measureHint.hidden = !on;
+});
+els.measureClear.addEventListener("click", () => { clearMeasurements(); });
+
+// ---- cross-section ----
+function refreshClip() {
+  const on = els.clipToggle.checked;
+  els.clipControls.hidden = !on;
+  if (!on) {
+    setClipping(false);
+    els.clipValue.textContent = "—";
+    return;
+  }
+  const bounds = getModelBounds();
+  if (!bounds) return;
+  const axis = els.clipAxis.value;
+  const lo = bounds.min[axis], hi = bounds.max[axis];
+  // Configure slider range whenever axis changes or first enable.
+  if (!els.clipSlider.dataset.axis || els.clipSlider.dataset.axis !== axis) {
+    els.clipSlider.min = lo.toFixed(2);
+    els.clipSlider.max = hi.toFixed(2);
+    els.clipSlider.value = ((lo + hi) / 2).toFixed(2);
+    els.clipSlider.dataset.axis = axis;
+  }
+  const pos = parseFloat(els.clipSlider.value);
+  setClipping(true, axis, pos, els.clipFlip.checked);
+  els.clipValue.textContent = `${axis.toUpperCase()} = ${pos.toFixed(1)} mm`;
+}
+els.clipToggle.addEventListener("change", refreshClip);
+els.clipAxis.addEventListener("change", () => { delete els.clipSlider.dataset.axis; refreshClip(); });
+els.clipSlider.addEventListener("input", refreshClip);
+els.clipFlip.addEventListener("change", refreshClip);
 els.holesToggle.addEventListener("change", () => setHoles(els.holesToggle.checked));
 els.thinToggle.addEventListener("change", () => {
   if (els.thinToggle.checked) showStatus("İnce duvar hesaplanıyor…", false);
