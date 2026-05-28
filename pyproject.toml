@@ -10,7 +10,7 @@ readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.9"
 authors = [
-    {name = "Ömer Özgen", email = "omerozgenn35@gmail.com"}
+    {name = "Ömer Özgen", email = "90107212+omerozgen@users.noreply.github.com"}
 ]
 keywords = ["3d-printing", "stl", "slicer", "mesh-analysis", "creality", "anycubic"]
 classifiers = [

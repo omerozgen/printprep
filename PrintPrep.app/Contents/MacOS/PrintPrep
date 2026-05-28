@@ -4,32 +4,54 @@
 
 set -e
 
-# Resolve the project root. Two strategies (first match wins):
-#   1) Override via PRINTPREP_DIR env var (advanced users).
-#   2) Walk up from this script's location until we find a venv + pyproject.toml.
-#   3) Fall back to the install-time absolute path.
+# Resolve the project root. Tried in order, first match wins:
+#   1) PRINTPREP_DIR env var (advanced users / CI).
+#   2) Walk up from this script's location until a venv + pyproject.toml is found
+#      (works when the .app sits inside the project checkout).
+#   3) Cached choice from a previous launch (~/Library/Application Support/PrintPrep/project_path).
+#   4) Ask the user with a folder picker, then cache the result.
 HERE="$(cd "$(dirname "$0")" && pwd)"
 PROJECT=""
+CONFIG_DIR="$HOME/Library/Application Support/PrintPrep"
+CONFIG_FILE="$CONFIG_DIR/project_path"
 
-if [ -n "${PRINTPREP_DIR}" ] && [ -d "${PRINTPREP_DIR}" ]; then
-    PROJECT="${PRINTPREP_DIR}"
+is_printprep_dir() {
+    [ -f "$1/pyproject.toml" ] && [ -x "$1/venv/bin/printprep" ] && [ -x "$1/venv/bin/python" ]
+}
+
+if [ -n "${PRINTPREP_DIR}" ] && is_printprep_dir "$PRINTPREP_DIR"; then
+    PROJECT="$PRINTPREP_DIR"
 fi
 
 if [ -z "$PROJECT" ]; then
-    # Try walking up from the .app's location.
     CANDIDATE="$HERE"
     for _ in 1 2 3 4 5; do
         CANDIDATE="$(dirname "$CANDIDATE")"
-        if [ -f "$CANDIDATE/pyproject.toml" ] && [ -x "$CANDIDATE/venv/bin/printprep" ]; then
+        if is_printprep_dir "$CANDIDATE"; then
             PROJECT="$CANDIDATE"
             break
         fi
     done
 fi
 
+if [ -z "$PROJECT" ] && [ -f "$CONFIG_FILE" ]; then
+    CACHED="$(cat "$CONFIG_FILE" 2>/dev/null)"
+    if is_printprep_dir "$CACHED"; then
+        PROJECT="$CACHED"
+    fi
+fi
+
 if [ -z "$PROJECT" ]; then
-    # Hard-coded fallback (the path used when this app was built).
-    PROJECT="/Users/omerozgen/motive/stl-project"
+    PICKED="$(osascript -e 'POSIX path of (choose folder with prompt "Select your PrintPrep project folder (the one containing pyproject.toml and venv/)")' 2>/dev/null || true)"
+    PICKED="${PICKED%/}"
+    if [ -n "$PICKED" ] && is_printprep_dir "$PICKED"; then
+        PROJECT="$PICKED"
+        mkdir -p "$CONFIG_DIR"
+        printf '%s\n' "$PROJECT" > "$CONFIG_FILE"
+    else
+        osascript -e 'display alert "PrintPrep" message "Selected folder is not a PrintPrep project (needs pyproject.toml and venv/). Run: pip install -e \".[web,desktop]\" inside the project, then try again."'
+        exit 1
+    fi
 fi
 
 LOG_DIR="$HOME/Library/Logs"
