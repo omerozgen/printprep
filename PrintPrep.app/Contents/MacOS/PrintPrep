@@ -1,0 +1,75 @@
+#!/bin/bash
+# PrintPrep launcher — starts the local web server and opens the browser.
+# Quitting the app (Cmd+Q from the menu, or right-click in Dock -> Quit) stops the server.
+
+set -e
+
+# Resolve the project root. Two strategies (first match wins):
+#   1) Override via PRINTPREP_DIR env var (advanced users).
+#   2) Walk up from this script's location until we find a venv + pyproject.toml.
+#   3) Fall back to the install-time absolute path.
+HERE="$(cd "$(dirname "$0")" && pwd)"
+PROJECT=""
+
+if [ -n "${PRINTPREP_DIR}" ] && [ -d "${PRINTPREP_DIR}" ]; then
+    PROJECT="${PRINTPREP_DIR}"
+fi
+
+if [ -z "$PROJECT" ]; then
+    # Try walking up from the .app's location.
+    CANDIDATE="$HERE"
+    for _ in 1 2 3 4 5; do
+        CANDIDATE="$(dirname "$CANDIDATE")"
+        if [ -f "$CANDIDATE/pyproject.toml" ] && [ -x "$CANDIDATE/venv/bin/printprep" ]; then
+            PROJECT="$CANDIDATE"
+            break
+        fi
+    done
+fi
+
+if [ -z "$PROJECT" ]; then
+    # Hard-coded fallback (the path used when this app was built).
+    PROJECT="/Users/omerozgen/motive/stl-project"
+fi
+
+LOG_DIR="$HOME/Library/Logs"
+LOG="$LOG_DIR/printprep.log"
+mkdir -p "$LOG_DIR"
+
+cd "$PROJECT" || {
+    osascript -e "display alert \"PrintPrep\" message \"Cannot find project at $PROJECT.\nSet PRINTPREP_DIR or rebuild the app.\""
+    exit 1
+}
+
+PY="$PROJECT/venv/bin/printprep"
+PYTHON="$PROJECT/venv/bin/python"
+if [ ! -x "$PY" ] || [ ! -x "$PYTHON" ]; then
+    osascript -e "display alert \"PrintPrep\" message \"venv not found at $PROJECT/venv. Run 'pip install -e .[web]' first.\""
+    exit 1
+fi
+
+# Force native architecture so venv C-extensions (numpy etc.) load correctly.
+# `uname -m` can lie when the .app is launched under Rosetta — ask the hardware.
+if [ "$(sysctl -n hw.optional.arm64 2>/dev/null)" = "1" ]; then
+    NATIVE_ARCH="arm64"
+else
+    NATIVE_ARCH="x86_64"
+fi
+ARCH_PREFIX=(/usr/bin/arch "-${NATIVE_ARCH}")
+
+# `printprep app` opens a native pywebview window; falls back to `serve` +
+# default browser when the [desktop] extra isn't installed.
+if "$PYTHON" -c "import webview" 2>/dev/null; then
+    echo "--- $(date) PrintPrep app (project=$PROJECT, arch=$HOST_ARCH) ---" >> "$LOG"
+    exec "${ARCH_PREFIX[@]}" "$PY" app >> "$LOG" 2>&1
+fi
+
+# Fallback: classic serve + browser tab.
+URL="http://127.0.0.1:8000"
+if curl -s -o /dev/null --max-time 1 "$URL/api/options" 2>/dev/null; then
+    open "$URL"
+    exit 0
+fi
+(sleep 1.5 && open "$URL") &
+echo "--- $(date) PrintPrep serve fallback (project=$PROJECT, arch=$HOST_ARCH) ---" >> "$LOG"
+exec "${ARCH_PREFIX[@]}" "$PY" serve --host 127.0.0.1 --port 8000 >> "$LOG" 2>&1

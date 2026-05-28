@@ -472,5 +472,48 @@ def serve(host, port):
     uvicorn.run("printprep.web.app:app", host=host, port=port, log_level="info")
 
 
+@main.command(name="app",
+              help="Open as a native desktop window (needs the [desktop] extra).")
+@click.option("--host", default="127.0.0.1", show_default=True)
+@click.option("--port", default=8000, show_default=True, type=int)
+@click.option("--width", default=1100, type=int, show_default=True)
+@click.option("--height", default=820, type=int, show_default=True)
+def app_cmd(host, port, width, height):
+    try:
+        import webview
+        import uvicorn
+    except ImportError:
+        err_console.print(
+            "Native window mode needs the [desktop] extra. Install with:\n"
+            "  pip install -e \".[desktop]\""
+        )
+        sys.exit(1)
+
+    import socket
+    import threading
+    import time
+
+    # uvicorn runs in a daemon thread so closing the window kills everything.
+    config = uvicorn.Config(
+        "printprep.web.app:app", host=host, port=port,
+        log_level="warning", access_log=False,
+    )
+    server = uvicorn.Server(config)
+    threading.Thread(target=server.run, daemon=True).start()
+
+    # Wait until the port responds (or give up after a few seconds).
+    deadline = time.time() + 8
+    while time.time() < deadline:
+        try:
+            with socket.create_connection((host, port), timeout=0.2):
+                break
+        except OSError:
+            time.sleep(0.1)
+
+    webview.create_window("PrintPrep", f"http://{host}:{port}/",
+                          width=width, height=height, resizable=True)
+    webview.start()
+
+
 if __name__ == "__main__":
     main()

@@ -59,6 +59,11 @@ analyze = [
     # Used for self-intersection face detection (Python 3.10+ only — no wheel for 3.9).
     "pymeshlab>=2023.12; python_version >= '3.10'",
 ]
+desktop = [
+    # `printprep app` opens the web UI inside a native window
+    # (WKWebView on macOS, WebView2 on Windows, GTK WebKit on Linux).
+    "pywebview>=5.0",
+]
 
 [project.scripts]
 printprep = "printprep.cli:main"

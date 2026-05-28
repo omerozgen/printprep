@@ -60,6 +60,23 @@ pip install -e ".[web]"   # tek seferlik
 printprep serve           # http://127.0.0.1:8000
 ```
 
+## Masaüstü Uygulaması
+
+Tarayıcıya gerek yok — `printprep app` web arayüzünü kendi native penceresinde açar (WKWebView/WebView2/GTK WebKit). Sunucu aynı süreçte arka planda çalışır; pencereyi kapatınca her şey kapanır.
+
+```bash
+pip install -e ".[web,desktop]"   # pywebview dahil
+printprep app                     # native pencerede aç
+```
+
+Çift-tıkla başlatıcılar (tüm platformlar için):
+
+- **macOS:** `PrintPrep.app`'i çift-tıkla (veya Dock'a sürükle / `/Applications` klasörüne kopyala)
+- **Windows:** `PrintPrep.bat`'i çift-tıkla (Masaüstü kısayolu olarak da çalışır)
+- **Linux:** `./install-linux.sh` çalıştır → `~/.local/share/applications/printprep.desktop` kurulur ve uygulama menüsünde **PrintPrep** olarak görünür
+
+Tümü aynı `printprep app` komutunu çağırır. Pywebview kurulu değilse otomatik olarak `printprep serve` + varsayılan tarayıcıya düşer.
+
 Tamamen yerel çalışır — model verisi bilgisayardan çıkmaz. 3D görünümde overhang
 yüzeyleri kırmızı, ince duvarlar amber, delik/açık kenarlar macenta işaretlenir;
 ayrı gövdeler farklı renklere boyanır. Modeli en iyi pozisyona yatırabilir, kendi

@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=PrintPrep
+GenericName=STL Analyzer
+Comment=STL model analysis, repair and slicer profile suggestion
+Exec=__PROJECT__/install-linux.sh %u
+Path=__PROJECT__
+Terminal=false
+Categories=Graphics;3DGraphics;Engineering;
+Keywords=3D;STL;slicer;printing;mesh;
+StartupNotify=true
+StartupWMClass=PrintPrep
