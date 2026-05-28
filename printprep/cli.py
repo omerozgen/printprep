@@ -7,12 +7,16 @@ import sys
 from dataclasses import asdict
 
 import click
+import numpy as np
 from rich.console import Console
 from rich.table import Table
 
 from printprep import PrintPrepError, __version__
 from printprep.config.presets import MATERIAL_PRESETS
-from printprep.core import analyze, load_mesh, merge_to_single, repair_mesh, suggest_orientation
+from printprep.core import (
+    analyze, load_mesh, merge_to_single, pack as pack_layout,
+    repair_mesh, suggest_orientation,
+)
 from printprep.slicer import (
     EXPORT_FORMATS,
     SLICER_NAMES,
@@ -143,7 +147,10 @@ def fix(path, output):
               help="Write slicer-importable profile files instead of printing JSON.")
 @click.option("--out-dir", "out_dir", type=click.Path(), default=".",
               show_default=True, help="Directory for --export output files.")
-def suggest(path, slicer, material, import_profile, export_fmt, out_dir):
+@click.option("--printer", default="", show_default=False,
+              help='Target printer name for --export orca (e.g. "Creality K1 Max 0.4 nozzle"). '
+                   "Becomes compatible_printers so the preset binds to that printer on import.")
+def suggest(path, slicer, material, import_profile, export_fmt, out_dir, printer):
     try:
         mesh = load_mesh(path)
     except PrintPrepError as exc:
@@ -164,7 +171,7 @@ def suggest(path, slicer, material, import_profile, export_fmt, out_dir):
         profile = generator.build_profile(result, material)
 
     if export_fmt:
-        files = export_profile(profile, export_fmt)
+        files = export_profile(profile, export_fmt, printer=printer)
         os.makedirs(out_dir, exist_ok=True)
         console.print(f"[bold]Exported {export_fmt} profile for {profile.slicer}:[/bold]")
         for fname, text in files.items():
@@ -237,6 +244,30 @@ def merge(path, output):
     console.print(f"Output: [cyan]{output}[/cyan]")
 
 
+@main.command(name="slicer-discover",
+              help="List filament/process profiles found in locally installed slicers.")
+def slicer_discover():
+    from printprep.slicer.discover import discover_profiles
+    rows = discover_profiles()
+    if not rows:
+        console.print("[yellow]No slicer profiles found in standard install locations.[/yellow]")
+        console.print("[dim]Slicer not installed or profiles are in a custom path.[/dim]")
+        return
+
+    table = Table(title="Installed slicer profiles", title_style="bold cyan")
+    table.add_column("Slicer", style="cyan")
+    table.add_column("Kind")
+    table.add_column("Name", overflow="fold")
+    table.add_column("Path", overflow="fold", style="dim")
+    for r in rows:
+        table.add_row(r["slicer"], r["kind"], r["name"], r["path"])
+    console.print(table)
+    console.print(
+        f"\n{len(rows)} profile(s). "
+        "Use [cyan]printprep suggest --import-profile <path>[/cyan] to base a recommendation on one."
+    )
+
+
 @main.command(help="Analyze every STL in a folder and print a summary.")
 @click.argument("directory", type=click.Path())
 @click.option("--pattern", default="*.stl", show_default=True, help="Glob pattern to match.")
@@ -292,6 +323,106 @@ def batch(directory, pattern, recursive, json_out):
         with open(json_out, "w", encoding="utf-8") as fh:
             _json.dump(results, fh, indent=2)
         console.print(f"Full results: [cyan]{json_out}[/cyan]")
+
+
+@main.command(help="Pack many STLs onto the printer bed and emit one combined STL per bed.")
+@click.argument("directory", type=click.Path())
+@click.option("--bed", "bed_spec", default="420x420", show_default=True,
+              help="Bed size as WxD in mm (default 420x420 — fits Anycubic Kobra Max / Creality CR-10 Max).")
+@click.option("--padding", default=5.0, show_default=True, type=float,
+              help="Gap between parts in mm.")
+@click.option("--rotate/--no-rotate", default=True, show_default=True,
+              help="Allow 90° rotation about Z to improve fit.")
+@click.option("--pattern", default="*.stl", show_default=True)
+@click.option("--recursive", "-r", is_flag=True)
+@click.option("--out-dir", "out_dir", type=click.Path(), default=".",
+              show_default=True, help="Directory for packed STLs and layout.json.")
+def pack(directory, bed_spec, padding, rotate, pattern, recursive, out_dir):
+    import trimesh
+    try:
+        bed_w, bed_d = (float(x) for x in bed_spec.lower().split("x", 1))
+    except Exception:
+        err_console.print(f"Invalid --bed '{bed_spec}'. Expected like '420x420'.")
+        sys.exit(1)
+    if not os.path.isdir(directory):
+        err_console.print(f"Not a directory: {directory}")
+        sys.exit(1)
+
+    if recursive:
+        files = glob.glob(os.path.join(directory, "**", pattern), recursive=True)
+    else:
+        files = glob.glob(os.path.join(directory, pattern))
+    files = sorted(f for f in files if os.path.isfile(f))
+    if not files:
+        err_console.print(f"No files matching '{pattern}' in {directory}")
+        sys.exit(1)
+
+    meshes = {}
+    items = []
+    for path in files:
+        try:
+            mesh = load_mesh(path)
+        except PrintPrepError as exc:
+            err_console.print(f"  skipping {os.path.basename(path)}: {exc}")
+            continue
+        name = os.path.basename(path)
+        meshes[name] = mesh
+        items.append((name, float(mesh.extents[0]), float(mesh.extents[1])))
+
+    if not items:
+        err_console.print("Nothing to pack.")
+        sys.exit(1)
+
+    layout = pack_layout(items, bed_size=(bed_w, bed_d), padding=padding,
+                         allow_rotate=rotate)
+    os.makedirs(out_dir, exist_ok=True)
+
+    table = Table(title="Bed-pack layout", title_style="bold cyan")
+    table.add_column("Bed")
+    table.add_column("Parts")
+    table.add_column("Items", overflow="fold")
+    for bi, bed in enumerate(layout.beds, start=1):
+        names = ", ".join(p.item_id + (" (R)" if p.rotated else "") for p in bed.items)
+        table.add_row(str(bi), str(len(bed.items)), names)
+    console.print(table)
+    console.print(
+        f"\n[bold]{layout.bed_count}[/bold] bed(s) for {len(items)} part(s) "
+        f"on {bed_w:.0f}×{bed_d:.0f} mm bed."
+    )
+    if layout.unplaced:
+        console.print(
+            f"[yellow]{len(layout.unplaced)} part(s) too large for the bed: "
+            + ", ".join(u[0] for u in layout.unplaced) + "[/yellow]"
+        )
+
+    # Write one combined STL per bed: each part translated (and optionally rotated)
+    # to its assigned position, with its base resting on z=0.
+    layout_json = {"bed_size_mm": [bed_w, bed_d], "padding_mm": padding,
+                   "beds": [], "unplaced": [u[0] for u in layout.unplaced]}
+    for bi, bed in enumerate(layout.beds, start=1):
+        parts = []
+        for place in bed.items:
+            src = meshes[place.item_id].copy()
+            if place.rotated:
+                R = trimesh.transformations.rotation_matrix(np.pi / 2, [0, 0, 1])
+                src.apply_transform(R)
+            mn = src.bounds[0]
+            src.apply_translation([place.x - mn[0], place.y - mn[1], -mn[2]])
+            parts.append(src)
+        combined = trimesh.util.concatenate(parts) if len(parts) > 1 else parts[0]
+        out_path = os.path.join(out_dir, f"packed_bed{bi}.stl")
+        combined.export(out_path)
+        console.print(f"  ✓ [cyan]{out_path}[/cyan]")
+        layout_json["beds"].append({
+            "bed": bi,
+            "items": [
+                {"name": p.item_id, "x": round(p.x, 3), "y": round(p.y, 3),
+                 "w": round(p.width, 3), "d": round(p.depth, 3), "rotated": p.rotated}
+                for p in bed.items
+            ],
+        })
+    with open(os.path.join(out_dir, "layout.json"), "w", encoding="utf-8") as fh:
+        _json.dump(layout_json, fh, indent=2)
 
 
 @main.command(help="Launch the local web interface (browser UI).")

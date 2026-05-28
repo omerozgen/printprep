@@ -44,6 +44,7 @@ const els = {
   profileGrid: document.getElementById("profile-grid"),
   profileOutput: document.getElementById("profile-output"),
   exportFormat: document.getElementById("export-format"),
+  exportPrinter: document.getElementById("export-printer"),
   exportBtn: document.getElementById("export-btn"),
   exportHint: document.getElementById("export-hint"),
   batchInput: document.getElementById("batch-input"),
@@ -496,6 +497,8 @@ els.exportBtn.addEventListener("click", async () => {
   form.append("slicer", els.slicerSelect.value);
   form.append("material", els.materialSelect.value);
   form.append("fmt", fmt);
+  const printerName = els.exportPrinter.value.trim();
+  if (printerName) form.append("printer", printerName);
   if (importedProfile) form.append("profile", importedProfile);
   try {
     const res = await fetch("/api/export", { method: "POST", body: form });

@@ -47,3 +47,18 @@ def test_prusa_export_is_importable_ini(clean_cube):
 def test_unknown_format_raises(clean_cube):
     with pytest.raises(ValueError):
         export_profile(_profile(clean_cube), "cura")
+
+
+def test_orca_export_embeds_compatible_printer(clean_cube):
+    files = export_profile(_profile(clean_cube), "orca",
+                           printer="Creality K1 Max 0.4 nozzle")
+    fil = json.loads(files[next(n for n in files if n.endswith("_filament.json"))])
+    proc = json.loads(files[next(n for n in files if n.endswith("_process.json"))])
+    assert fil["compatible_printers"] == ["Creality K1 Max 0.4 nozzle"]
+    assert proc["compatible_printers"] == ["Creality K1 Max 0.4 nozzle"]
+
+
+def test_orca_export_skips_printer_when_blank(clean_cube):
+    files = export_profile(_profile(clean_cube), "orca")
+    fil = json.loads(files[next(n for n in files if n.endswith("_filament.json"))])
+    assert "compatible_printers" not in fil

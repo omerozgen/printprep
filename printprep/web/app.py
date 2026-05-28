@@ -90,6 +90,7 @@ def api_suggest(model: UploadFile, slicer: str = Form("creality"),
 @app.post("/api/export")
 def api_export(model: UploadFile, slicer: str = Form("creality"),
                material: str = Form("pla"), fmt: str = Form("orca"),
+               printer: str = Form(""),
                profile: Optional[UploadFile] = File(None)):
     if fmt not in EXPORT_FORMATS:
         return JSONResponse(status_code=400, content={"error": f"Unknown format '{fmt}'."})
@@ -103,7 +104,7 @@ def api_export(model: UploadFile, slicer: str = Form("creality"),
             built = generator.build_profile_from_preset(result, imported)
         else:
             built = generator.build_profile(result, material)
-        files = export_profile(built, fmt)
+        files = export_profile(built, fmt, printer=printer)
     except PrintPrepError as exc:
         return JSONResponse(status_code=400, content={"error": str(exc)})
     except KeyError as exc:

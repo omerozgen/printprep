@@ -23,10 +23,10 @@ _PRUSA_SUPPORT_STYLE = {"normal": "grid", "tree_auto": "organic"}
 _PROFILE_VERSION = "1.10.0.0"
 
 
-def _orca_filament(p: SlicerProfile) -> dict:
+def _orca_filament(p: SlicerProfile, printer: str = "") -> dict:
     nozzle = str(p.nozzle_temp_c)
     bed = str(p.bed_temp_c)
-    return {
+    out = {
         "type": "filament",
         "name": f"PrintPrep {p.material} @{p.slicer.capitalize()}",
         "from": "User",
@@ -45,11 +45,14 @@ def _orca_filament(p: SlicerProfile) -> dict:
         "filament_retraction_length": [str(p.retraction_mm)],
         "filament_retraction_speed": [str(p.retraction_speed_mms)],
     }
+    if printer:
+        out["compatible_printers"] = [printer]
+    return out
 
 
-def _orca_process(p: SlicerProfile) -> dict:
+def _orca_process(p: SlicerProfile, printer: str = "") -> dict:
     layer = str(p.layer_height_mm)
-    return {
+    out = {
         "type": "process",
         "name": f"PrintPrep {p.layer_height_mm}mm @{p.slicer.capitalize()}",
         "from": "User",
@@ -65,6 +68,9 @@ def _orca_process(p: SlicerProfile) -> dict:
         "brim_type": "outer_only" if p.brim else "no_brim",
         "brim_width": "5" if p.brim else "0",
     }
+    if printer:
+        out["compatible_printers"] = [printer]
+    return out
 
 
 def _prusa_ini(p: SlicerProfile) -> str:
@@ -92,8 +98,13 @@ def _prusa_ini(p: SlicerProfile) -> str:
     return "\n".join(lines)
 
 
-def export_profile(profile: SlicerProfile, fmt: str = "orca") -> Dict[str, str]:
-    """Return {filename: file_text} for the requested format."""
+def export_profile(profile: SlicerProfile, fmt: str = "orca",
+                   printer: str = "") -> Dict[str, str]:
+    """Return {filename: file_text} for the requested format.
+
+    When `printer` is non-empty, Orca exports embed it as compatible_printers
+    so the profile binds to that specific printer on import.
+    """
     fmt = fmt.lower()
     if fmt not in EXPORT_FORMATS:
         valid = ", ".join(EXPORT_FORMATS)
@@ -102,7 +113,7 @@ def export_profile(profile: SlicerProfile, fmt: str = "orca") -> Dict[str, str]:
     base = f"PrintPrep_{profile.slicer}_{profile.material}".replace(" ", "_")
     if fmt == "orca":
         return {
-            f"{base}_filament.json": json.dumps(_orca_filament(profile), indent=2),
-            f"{base}_process.json": json.dumps(_orca_process(profile), indent=2),
+            f"{base}_filament.json": json.dumps(_orca_filament(profile, printer), indent=2),
+            f"{base}_process.json": json.dumps(_orca_process(profile, printer), indent=2),
         }
     return {f"{base}.ini": _prusa_ini(profile)}

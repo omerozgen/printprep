@@ -306,6 +306,15 @@ main {
   color: var(--muted);
   font-size: 0.85rem;
 }
+.export-row input[type="text"] {
+  background: var(--card-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.95rem;
+  min-width: 260px;
+}
 .suggest-controls select,
 .export-row select {
   background: var(--card-2);

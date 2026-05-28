@@ -117,6 +117,18 @@
               <option value="prusa">PrusaSlicer / SuperSlicer (.ini)</option>
             </select>
           </label>
+          <label>Hedef yazıcı (opsiyonel)
+            <input id="export-printer" type="text" list="printer-options"
+                   placeholder='örn. "Creality K1 Max 0.4 nozzle"'>
+            <datalist id="printer-options">
+              <option value="Creality K1 Max 0.4 nozzle">
+              <option value="Creality K1 0.4 nozzle">
+              <option value="Creality CR-10 Smart Pro 0.4 nozzle">
+              <option value="Creality Ender-3 V3 SE 0.4 nozzle">
+              <option value="Anycubic Kobra 3 Max 0.4 nozzle">
+              <option value="Anycubic Kobra S1 0.4 nozzle">
+            </datalist>
+          </label>
           <button type="button" id="export-btn" class="btn">Slicer'a aktar (.zip indir)</button>
         </div>
         <span id="export-hint" class="muted-note"></span>
