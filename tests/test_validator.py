@@ -31,4 +31,4 @@ def test_analyze_handles_missing_ray_backend(monkeypatch, clean_cube):
     monkeypatch.setattr(validator, "ray_available", lambda mesh: False)
     result = analyzer.analyze(clean_cube, path="clean_cube.stl")
     assert result.min_wall_mm is None
-    assert any("Thin-wall analysis unavailable" in i for i in result.issues)
+    assert any("Thin-wall analysis unavailable" in i["text"] for i in result.issues)

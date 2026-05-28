@@ -1,7 +1,7 @@
 """Geometry analysis: produce an AnalysisResult that flows into suggestions."""
 
 from dataclasses import dataclass, field
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import trimesh
 
@@ -27,8 +27,13 @@ class AnalysisResult:
     overhang_face_count: int
     overhang_area_fraction: float
     steepest_overhang_deg: float
-    min_wall_mm: Optional[float]
-    issues: List[str] = field(default_factory=list)
+    min_wall_mm: Optional[float]  # alias for wall_thickness["p5_mm"] (backwards-compat)
+    wall_thickness: Optional[Dict[str, float]] = None  # {min_mm, p5_mm, p50_mm, max_mm, samples}
+    holes: List[Dict[str, Any]] = field(default_factory=list)  # [{perimeter_mm, edge_count}]
+    non_manifold_edges: int = 0
+    self_intersecting: Optional[bool] = None  # None when not checked (no pymeshlab)
+    self_intersection_count: Optional[int] = None
+    issues: List[Dict[str, str]] = field(default_factory=list)  # [{text, kind}]
 
 
 def analyze(mesh: trimesh.Trimesh, path: str = "",
@@ -36,6 +41,8 @@ def analyze(mesh: trimesh.Trimesh, path: str = "",
             max_ray_samples: int = defaults.MAX_RAY_SAMPLES) -> AnalysisResult:
     """Run the full analysis pipeline on a loaded mesh."""
     overhang_count, overhang_frac, steepest = validator.overhang_stats(mesh, overhang_threshold_deg)
+    wt = validator.estimate_wall_thickness(mesh, max_samples=max_ray_samples)
+    si_count = validator.check_self_intersection(mesh)
 
     result = AnalysisResult(
         path=path,
@@ -54,7 +61,12 @@ def analyze(mesh: trimesh.Trimesh, path: str = "",
         overhang_face_count=overhang_count,
         overhang_area_fraction=overhang_frac,
         steepest_overhang_deg=steepest,
-        min_wall_mm=validator.estimate_min_wall(mesh, max_samples=max_ray_samples),
+        min_wall_mm=wt["p5_mm"] if wt else None,
+        wall_thickness=wt,
+        holes=validator.detect_holes(mesh),
+        non_manifold_edges=validator.non_manifold_edge_count(mesh),
+        self_intersecting=(None if si_count is None else si_count > 0),
+        self_intersection_count=si_count,
     )
     result.issues = validator.collect_issues(result)
     return result

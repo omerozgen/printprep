@@ -68,16 +68,26 @@ def analyze_cmd(path):
         )
     else:
         table.add_row("Overhangs", "none")
-    table.add_row(
-        "Min wall (est.)",
-        f"{result.min_wall_mm:.2f} mm" if result.min_wall_mm is not None else "n/a",
-    )
+    if result.wall_thickness:
+        wt = result.wall_thickness
+        table.add_row(
+            "Wall thickness (min/p5/med)",
+            f"{wt['min_mm']:.2f} / {wt['p5_mm']:.2f} / {wt['p50_mm']:.2f} mm",
+        )
+    else:
+        table.add_row("Wall thickness", "n/a")
+    if result.holes:
+        top = result.holes[0]
+        extra = f" (+{len(result.holes) - 1} smaller)" if len(result.holes) > 1 else ""
+        table.add_row("Holes", f"{len(result.holes)} — largest {top['perimeter_mm']:.1f} mm perim.{extra}")
+    if result.non_manifold_edges:
+        table.add_row("Non-manifold edges", str(result.non_manifold_edges))
     console.print(table)
 
     if result.issues:
         console.print("\n[bold yellow]Issues found:[/bold yellow]")
         for issue in result.issues:
-            console.print(f"  [yellow]⚠[/yellow] {issue}")
+            console.print(f"  [yellow]⚠[/yellow] {issue['text']}")
     else:
         console.print("\n[bold green]No issues found — ready for slicing.[/bold green]")
 

@@ -3,6 +3,9 @@
 import { loadModelFromFile, setOverhang, setHoles, setThin, setBodies, setInverted, getBodyCount } from "./viewer.js";
 
 let currentFile = null;
+let originalFile = null;     // what the user uploaded (for the before/after toggle)
+let fixedBlob = null;        // last successful fix output
+let showingFixed = false;
 
 const els = {
   dropZone: document.getElementById("drop-zone"),
@@ -24,6 +27,7 @@ const els = {
   fixReport: document.getElementById("fix-report"),
   orientBtn: document.getElementById("orient-btn"),
   orientReport: document.getElementById("orient-report"),
+  baToggle: document.getElementById("ba-toggle"),
   mergeBtn: document.getElementById("merge-btn"),
   mergeReport: document.getElementById("merge-report"),
   suggestSection: document.getElementById("suggest-section"),
@@ -51,6 +55,22 @@ const els = {
 
 let importedProfile = null;
 let lastProfileJson = "";
+
+// Click an analysis issue -> enable the matching 3D highlight + scroll into view.
+function scrollToViewer() {
+  els.viewerSection.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+const ISSUE_ACTIONS = {
+  overhang: () => { els.overhangToggle.checked = true; setOverhang(true); scrollToViewer(); },
+  holes: () => { els.holesToggle.checked = true; setHoles(true); scrollToViewer(); },
+  thin: () => {
+    els.thinToggle.checked = true;
+    showStatus("İnce duvar hesaplanıyor…", false);
+    setTimeout(() => { setThin(true); hideStatus(); scrollToViewer(); }, 30);
+  },
+  bodies: () => { els.bodiesToggle.checked = true; setBodies(true); scrollToViewer(); },
+  inverted: () => { els.invertedToggle.checked = true; setInverted(true); scrollToViewer(); },
+};
 
 function showStatus(msg, isError) {
   els.status.textContent = msg;
@@ -88,6 +108,10 @@ els.dropZone.addEventListener("drop", (e) => {
 
 function handleFile(file) {
   currentFile = file;
+  originalFile = file;
+  fixedBlob = null;
+  showingFixed = false;
+  els.baToggle.hidden = true;
   els.fileName.textContent = file.name;
   els.fixReport.hidden = true;
   els.orientReport.hidden = true;
@@ -156,9 +180,14 @@ function renderResults(d) {
     overhang = `${d.overhang_face_count} yüzey, max ${d.steepest_overhang_deg.toFixed(0)}° ` +
       `(%${(d.overhang_area_fraction * 100).toFixed(1)} alan)`;
   }
-  const minWall = d.min_wall_mm != null ? `${d.min_wall_mm.toFixed(2)} mm` : "n/a";
+  const wall = d.wall_thickness
+    ? `min ${d.wall_thickness.min_mm.toFixed(2)} / p5 ${d.wall_thickness.p5_mm.toFixed(2)} / med ${d.wall_thickness.p50_mm.toFixed(2)} mm`
+    : "n/a";
+  const holesSummary = (d.holes && d.holes.length > 0)
+    ? `${d.holes.length} (en büyük ${d.holes[0].perimeter_mm.toFixed(1)} mm)`
+    : (d.is_watertight ? "yok" : "—");
 
-  els.props.innerHTML = [
+  const rows = [
     prop("Hacim", `${(d.volume_mm3 / 1000).toFixed(2)} cm³`),
     prop("Yüzey alanı", `${(d.surface_area_mm2 / 100).toFixed(2)} cm²`),
     prop("Boyut", `${dim} mm`),
@@ -170,13 +199,31 @@ function renderResults(d) {
     prop("Bozuk yüzey", d.degenerate_faces),
     prop("Çift yüzey", d.duplicate_faces),
     prop("Overhang", overhang),
-    prop("Min duvar (tahmini)", minWall),
-  ].join("");
+    prop("Duvar kalınlığı", wall),
+    prop("Delikler", holesSummary),
+  ];
+  if (d.non_manifold_edges > 0) {
+    rows.push(prop("Non-manifold kenar", d.non_manifold_edges, "bad"));
+  }
+  els.props.innerHTML = rows.join("");
 
   if (d.issues.length === 0) {
     els.issues.innerHTML = `<li class="none">Sorun bulunamadı — baskıya hazır.</li>`;
   } else {
-    els.issues.innerHTML = d.issues.map((i) => `<li>⚠ ${i}</li>`).join("");
+    els.issues.innerHTML = d.issues.map((i) => {
+      const text = typeof i === "string" ? i : i.text;
+      const kind = (typeof i === "object" && i.kind) || "";
+      const clickable = kind in ISSUE_ACTIONS;
+      const cls = clickable ? "issue-row clickable" : "issue-row";
+      const hint = clickable ? ' <span class="issue-hint">3D\'de göster →</span>' : "";
+      return `<li class="${cls}" data-kind="${kind}">⚠ ${text}${hint}</li>`;
+    }).join("");
+    els.issues.querySelectorAll("li.clickable").forEach((li) => {
+      li.addEventListener("click", () => {
+        const fn = ISSUE_ACTIONS[li.dataset.kind];
+        if (fn) fn();
+      });
+    });
   }
 
   els.results.hidden = false;
@@ -230,12 +277,31 @@ els.fixBtn.addEventListener("click", async () => {
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
+
+    // Keep the repaired blob so the user can flip the viewer between before/after.
+    fixedBlob = blob;
+    showingFixed = false;  // viewer still shows the original; the toggle reveals the repair
+    els.baToggle.textContent = "3D'de onarımı göster ↻";
+    els.baToggle.hidden = false;
     hideStatus();
   } catch (err) {
     showStatus(err.message, true);
   } finally {
     els.fixBtn.disabled = false;
   }
+});
+
+els.baToggle.addEventListener("click", () => {
+  if (!fixedBlob || !originalFile) return;
+  showingFixed = !showingFixed;
+  const target = showingFixed ? fixedBlob : originalFile;
+  currentFile = target;
+  els.baToggle.textContent = showingFixed
+    ? "3D'de orijinali göster ↻"
+    : "3D'de onarımı göster ↻";
+  loadModelFromFile(target).catch((err) =>
+    showStatus("3D önizleme hatası: " + err.message, true)
+  );
 });
 
 // ---- orient (suggest best print position) ----
