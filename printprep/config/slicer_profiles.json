@@ -9,7 +9,8 @@
       "bed_temp_c": 55,
       "max_volumetric_speed_mm3s": 12.0,
       "retraction_mm": 0.8,
-      "retraction_speed_mms": 40
+      "retraction_speed_mms": 40,
+      "density_g_cm3": 1.24
     },
     "petg": {
       "name": "PETG",
@@ -17,7 +18,8 @@
       "bed_temp_c": 80,
       "max_volumetric_speed_mm3s": 10.0,
       "retraction_mm": 0.8,
-      "retraction_speed_mms": 40
+      "retraction_speed_mms": 40,
+      "density_g_cm3": 1.27
     },
     "abs": {
       "name": "ABS",
@@ -25,7 +27,8 @@
       "bed_temp_c": 100,
       "max_volumetric_speed_mm3s": 12.0,
       "retraction_mm": 0.8,
-      "retraction_speed_mms": 40
+      "retraction_speed_mms": 40,
+      "density_g_cm3": 1.04
     },
     "tpu": {
       "name": "TPU",
@@ -33,7 +36,8 @@
       "bed_temp_c": 35,
       "max_volumetric_speed_mm3s": 3.2,
       "retraction_mm": 0.4,
-      "retraction_speed_mms": 20
+      "retraction_speed_mms": 20,
+      "density_g_cm3": 1.21
     }
   }
 }

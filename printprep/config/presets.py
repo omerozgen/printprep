@@ -21,6 +21,7 @@ class MaterialPreset:
     max_volumetric_speed_mm3s: float
     retraction_mm: float
     retraction_speed_mms: int
+    density_g_cm3: float = 1.24  # PLA-ish default for older data files
 
 
 def _load() -> dict:
@@ -35,6 +36,7 @@ def _load() -> dict:
             max_volumetric_speed_mm3s=m["max_volumetric_speed_mm3s"],
             retraction_mm=m["retraction_mm"],
             retraction_speed_mms=m["retraction_speed_mms"],
+            density_g_cm3=m.get("density_g_cm3", 1.24),
         )
     return presets
 

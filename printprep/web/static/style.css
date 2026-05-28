@@ -306,6 +306,26 @@ main {
   color: var(--muted);
   font-size: 0.85rem;
 }
+.price-wrap { display: flex; gap: 0.4rem; }
+.suggest-controls input[type="number"],
+.suggest-controls input[type="text"] {
+  background: var(--card-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.95rem;
+}
+.suggest-controls input[type="number"] { min-width: 110px; }
+.suggest-controls input[type="text"] { min-width: 60px; max-width: 80px; }
+
+.estimate-block {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+.estimate-block h3 { margin: 0 0 0.5rem; }
+
 .export-row input[type="text"] {
   background: var(--card-2);
   color: var(--text);

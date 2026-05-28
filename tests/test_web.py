@@ -52,9 +52,25 @@ def test_suggest(clean_cube):
                     files=_file(clean_cube))
     assert r.status_code == 200
     body = r.json()
-    assert body["slicer"] == "creality"
-    assert body["material"] == "PLA"
-    assert body["supports"] is False  # cube has no overhangs
+    assert body["profile"]["slicer"] == "creality"
+    assert body["profile"]["material"] == "PLA"
+    assert body["profile"]["supports"] is False  # cube has no overhangs
+    est = body["estimate"]
+    assert est["filament_weight_g"] > 0
+    assert est["print_time_min"] > 0
+
+
+def test_suggest_with_price_returns_cost(clean_cube):
+    r = client.post(
+        "/api/suggest",
+        data={"slicer": "creality", "material": "pla",
+              "price_per_kg": "1200", "currency": "TL"},
+        files=_file(clean_cube),
+    )
+    assert r.status_code == 200
+    est = r.json()["estimate"]
+    assert est["cost"] is not None and est["cost"] > 0
+    assert est["currency"] == "TL"
 
 
 def test_fix(broken_cube):

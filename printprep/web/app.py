@@ -20,7 +20,10 @@ from fastapi.staticfiles import StaticFiles
 
 from printprep import PrintPrepError, __version__
 from printprep.config.presets import MATERIAL_PRESETS
-from printprep.core import analyze, load_mesh, merge_to_single, repair_mesh, suggest_orientation
+from printprep.core import (
+    analyze, estimate_print_job, load_mesh, merge_to_single, repair_mesh, suggest_orientation,
+)
+from printprep.config.presets import get_material
 from printprep.slicer import (
     EXPORT_FORMATS,
     SLICER_NAMES,
@@ -69,6 +72,8 @@ def api_analyze(model: UploadFile):
 @app.post("/api/suggest")
 def api_suggest(model: UploadFile, slicer: str = Form("creality"),
                 material: str = Form("pla"),
+                price_per_kg: Optional[float] = Form(None),
+                currency: str = Form(""),
                 profile: Optional[UploadFile] = File(None)):
     try:
         with _uploaded_mesh(model) as mesh:
@@ -78,13 +83,17 @@ def api_suggest(model: UploadFile, slicer: str = Form("creality"),
             imported = parse_material_profile(
                 profile.file.read().decode("utf-8", "replace"), profile.filename)
             built = generator.build_profile_from_preset(result, imported)
+            preset = imported
         else:
-            built = generator.build_profile(result, material)
+            preset = get_material(material)
+            built = generator.build_profile_from_preset(result, preset)
+        estimate = estimate_print_job(result, built, preset,
+                                      price_per_kg=price_per_kg, currency=currency)
     except PrintPrepError as exc:
         return JSONResponse(status_code=400, content={"error": str(exc)})
     except KeyError as exc:
         return JSONResponse(status_code=400, content={"error": str(exc).strip('"')})
-    return asdict(built)
+    return {"profile": asdict(built), "estimate": asdict(estimate)}
 
 
 @app.post("/api/export")

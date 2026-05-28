@@ -43,6 +43,10 @@ const els = {
   copyJson: document.getElementById("copy-json"),
   profileGrid: document.getElementById("profile-grid"),
   profileOutput: document.getElementById("profile-output"),
+  estimateBlock: document.getElementById("estimate-block"),
+  estimateGrid: document.getElementById("estimate-grid"),
+  priceInput: document.getElementById("price-input"),
+  currencyInput: document.getElementById("currency-input"),
   exportFormat: document.getElementById("export-format"),
   exportPrinter: document.getElementById("export-printer"),
   exportBtn: document.getElementById("export-btn"),
@@ -443,7 +447,18 @@ function fmtVal(v, unit) {
   return unit ? `${v} ${unit}` : `${v}`;
 }
 
-function renderProfile(data) {
+function fmtMinutes(m) {
+  if (m == null) return "—";
+  if (m < 60) return `${Math.round(m)} dk`;
+  const h = Math.floor(m / 60), mm = Math.round(m - h * 60);
+  return `${h} sa ${mm} dk`;
+}
+
+function renderProfile(payload) {
+  // Backwards-compat: api/suggest may return either {profile, estimate} or a flat profile.
+  const data = payload && payload.profile ? payload.profile : payload;
+  const estimate = payload && payload.estimate ? payload.estimate : null;
+
   els.profileTitle.textContent = `${data.slicer} · ${data.material}`;
   els.profileGrid.innerHTML = Object.entries(PROFILE_LABELS).map(([key, label]) => {
     if (!(key in data)) return "";
@@ -452,6 +467,23 @@ function renderProfile(data) {
   }).join("");
   lastProfileJson = JSON.stringify(data, null, 2);
   els.profileOutput.textContent = lastProfileJson;
+
+  if (estimate) {
+    const rows = [
+      prop("Filament",
+           `${(estimate.filament_length_mm / 1000).toFixed(2)} m  ` +
+           `(${estimate.filament_weight_g.toFixed(1)} g)`),
+      prop("Tahmini süre", fmtMinutes(estimate.print_time_min)),
+    ];
+    if (estimate.cost != null) {
+      const cur = estimate.currency ? ` ${estimate.currency}` : "";
+      rows.push(prop("Maliyet", `${estimate.cost.toFixed(2)}${cur}`));
+    }
+    els.estimateGrid.innerHTML = rows.join("");
+    els.estimateBlock.hidden = false;
+  } else {
+    els.estimateBlock.hidden = true;
+  }
   els.profileResult.hidden = false;
 }
 
@@ -463,6 +495,11 @@ els.suggestBtn.addEventListener("click", async () => {
   form.append("model", currentFile);
   form.append("slicer", els.slicerSelect.value);
   form.append("material", els.materialSelect.value);
+  const price = parseFloat(els.priceInput.value);
+  if (!isNaN(price) && price > 0) {
+    form.append("price_per_kg", String(price));
+    form.append("currency", els.currencyInput.value.trim());
+  }
   if (importedProfile) form.append("profile", importedProfile);
   try {
     const res = await fetch("/api/suggest", { method: "POST", body: form });

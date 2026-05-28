@@ -1,4 +1,5 @@
 from printprep.core.analyzer import AnalysisResult, analyze
+from printprep.core.estimate import PrintEstimate, estimate_print_job
 from printprep.core.mesh import load_mesh, ray_available
 from printprep.core.merge import MergeReport, merge_to_single
 from printprep.core.orient import OrientationResult, suggest_orientation
@@ -8,6 +9,8 @@ from printprep.core.repair import RepairReport, repair_mesh
 __all__ = [
     "AnalysisResult",
     "analyze",
+    "PrintEstimate",
+    "estimate_print_job",
     "load_mesh",
     "ray_available",
     "MergeReport",

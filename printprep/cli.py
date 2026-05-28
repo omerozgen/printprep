@@ -14,9 +14,10 @@ from rich.table import Table
 from printprep import PrintPrepError, __version__
 from printprep.config.presets import MATERIAL_PRESETS
 from printprep.core import (
-    analyze, load_mesh, merge_to_single, pack as pack_layout,
+    analyze, estimate_print_job, load_mesh, merge_to_single, pack as pack_layout,
     repair_mesh, suggest_orientation,
 )
+from printprep.config.presets import get_material
 from printprep.slicer import (
     EXPORT_FORMATS,
     SLICER_NAMES,
@@ -31,6 +32,13 @@ err_console = Console(stderr=True, style="bold red")
 
 def _yn(value: bool) -> str:
     return "[green]Yes[/green]" if value else "[red]No[/red]"
+
+
+def _fmt_minutes(minutes: float) -> str:
+    if minutes < 60:
+        return f"{minutes:.0f} dk"
+    h, m = divmod(int(round(minutes)), 60)
+    return f"{h} sa {m} dk"
 
 
 @click.group(help="STL model analysis and slicer setting recommendations.")
@@ -150,7 +158,11 @@ def fix(path, output):
 @click.option("--printer", default="", show_default=False,
               help='Target printer name for --export orca (e.g. "Creality K1 Max 0.4 nozzle"). '
                    "Becomes compatible_printers so the preset binds to that printer on import.")
-def suggest(path, slicer, material, import_profile, export_fmt, out_dir, printer):
+@click.option("--price-per-kg", "price_per_kg", type=float, default=None,
+              help="Filament price per kg (e.g. 25). Adds a cost estimate to the output.")
+@click.option("--currency", default="", help="Currency label shown next to cost (e.g. TL, USD, EUR).")
+def suggest(path, slicer, material, import_profile, export_fmt, out_dir, printer,
+            price_per_kg, currency):
     try:
         mesh = load_mesh(path)
     except PrintPrepError as exc:
@@ -168,7 +180,12 @@ def suggest(path, slicer, material, import_profile, export_fmt, out_dir, printer
             sys.exit(1)
         profile = generator.build_profile_from_preset(result, preset)
     else:
-        profile = generator.build_profile(result, material)
+        preset = get_material(material)
+        profile = generator.build_profile_from_preset(result, preset)
+
+    # Estimate filament use, weight and print time from the chosen profile.
+    estimate = estimate_print_job(result, profile, preset,
+                                  price_per_kg=price_per_kg, currency=currency)
 
     if export_fmt:
         files = export_profile(profile, export_fmt, printer=printer)
@@ -185,6 +202,19 @@ def suggest(path, slicer, material, import_profile, export_fmt, out_dir, printer
         console.print(f"[dim]{hint}[/dim]")
     else:
         console.print(generator.to_json(profile))
+
+    # Always-on estimate block (clearly labelled as approximate).
+    cost_line = ""
+    if estimate.cost is not None:
+        cur = estimate.currency or ""
+        cost_line = f"  Maliyet         : {estimate.cost}{(' ' + cur) if cur else ''}\n"
+    console.print(
+        "\n[bold cyan]Tahmini baskı (~%70 hassas):[/bold cyan]\n"
+        f"  Filament        : {estimate.filament_length_mm / 1000:.2f} m  "
+        f"({estimate.filament_weight_g:.1f} g)\n"
+        f"  Süre            : ~{_fmt_minutes(estimate.print_time_min)}\n"
+        + cost_line
+    )
 
 
 @main.command(help="Suggest the best print orientation and write a rotated STL.")
