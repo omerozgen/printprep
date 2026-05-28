@@ -55,6 +55,10 @@ merge = [
 repair = [
     "pymeshfix>=0.16.0",
 ]
+analyze = [
+    # Used for self-intersection face detection (Python 3.10+ only — no wheel for 3.9).
+    "pymeshlab>=2023.12; python_version >= '3.10'",
+]
 
 [project.scripts]
 printprep = "printprep.cli:main"
