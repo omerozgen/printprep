@@ -4,7 +4,6 @@ import math
 
 import numpy as np
 import trimesh
-from trimesh import grouping
 
 from printprep.config import defaults
 from printprep.core.mesh import ray_available
@@ -239,7 +238,7 @@ def collect_issues(result, cfg=defaults) -> list:
     if result.self_intersecting is True:
         n = result.self_intersection_count
         issues.append({
-            "text": (f"Self-intersecting faces detected"
+            "text": ("Self-intersecting faces detected"
                      + (f" ({n})." if n is not None else ".")),
             "kind": "self_intersection",
         })

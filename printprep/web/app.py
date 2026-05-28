@@ -13,7 +13,6 @@ from dataclasses import asdict
 
 from typing import List, Optional
 
-import trimesh
 from fastapi import FastAPI, File, Form, UploadFile
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles

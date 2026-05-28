@@ -2,7 +2,6 @@ import numpy as np
 import trimesh
 
 from printprep.core import suggest_orientation
-from printprep.core.validator import overhang_stats
 
 
 def test_tilted_box_is_reoriented_flat():
