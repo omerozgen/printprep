@@ -1,6 +1,6 @@
 # PrintPrep
 
-[English](README.md) | **Türkçe**
+[English](README.md) | **Türkçe** | [中文](README.zh.md) | [Español](README.es.md) | [العربية](README.ar.md) | [हिन्दी](README.hi.md) | [বাংলা](README.bn.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [日本語](README.ja.md) | [ਪੰਜਾਬੀ](README.pa.md) | [Deutsch](README.de.md) | [Basa Jawa](README.jv.md) | [한국어](README.ko.md) | [Français](README.fr.md)
 
 STL model analizi ve slicer ayar önerisi aracı.
 

@@ -18,6 +18,7 @@ from printprep.core import (
     repair_mesh, suggest_orientation,
 )
 from printprep.config.presets import get_material
+from printprep.i18n import t
 from printprep.slicer import (
     EXPORT_FORMATS,
     SLICER_NAMES,
@@ -36,18 +37,18 @@ def _yn(value: bool) -> str:
 
 def _fmt_minutes(minutes: float) -> str:
     if minutes < 60:
-        return f"{minutes:.0f} dk"
+        return f"{minutes:.0f} {t('minute_short_cli') or 'min'}"
     h, m = divmod(int(round(minutes)), 60)
-    return f"{h} sa {m} dk"
+    return f"{h} {t('hour_short_cli') or 'h'} {m} {t('minute_short_cli') or 'min'}"
 
 
-@click.group(help="STL model analysis and slicer setting recommendations.")
+@click.group(help=t("cli_group_help"))
 @click.version_option(__version__, prog_name="printprep")
 def main():
     pass
 
 
-@main.command(name="analyze", help="Analyze a model and report geometry, problems and overhangs.")
+@main.command(name="analyze", help=t("cmd_analyze_help"))
 @click.argument("path", type=click.Path())
 def analyze_cmd(path):
     try:
@@ -97,17 +98,17 @@ def analyze_cmd(path):
     console.print(table)
 
     if result.issues:
-        console.print("\n[bold yellow]Issues found:[/bold yellow]")
+        console.print(f"\n[bold yellow]{t('msg_issues_found')}[/bold yellow]")
         for issue in result.issues:
             console.print(f"  [yellow]⚠[/yellow] {issue['text']}")
     else:
-        console.print("\n[bold green]No issues found — ready for slicing.[/bold green]")
+        console.print(f"\n[bold green]{t('msg_no_issues')}[/bold green]")
 
 
-@main.command(help="Repair common mesh problems and write a fixed STL.")
+@main.command(help=t("cmd_fix_help"))
 @click.argument("path", type=click.Path())
 @click.option("--output", "-o", required=True, type=click.Path(),
-              help="Where to write the repaired STL.")
+              help=t("opt_fix_output"))
 def fix(path, output):
     try:
         mesh = load_mesh(path)
@@ -119,23 +120,23 @@ def fix(path, output):
     try:
         mesh.export(output)
     except Exception as exc:
-        err_console.print(f"Could not write '{output}': {exc}")
+        err_console.print(t("err_could_not_write", path=output, err=exc))
         sys.exit(1)
 
-    console.print("[bold]Applied fixes:[/bold]")
-    console.print(f"  ✓ Merged {report.merged_vertices} duplicate vertices")
-    console.print(f"  ✓ Removed {report.removed_degenerate} degenerate faces")
-    console.print(f"  ✓ Removed {report.removed_duplicate} duplicate faces")
-    console.print(f"  ✓ Holes filled: {report.holes_filled}")
+    console.print(f"[bold]{t('msg_applied_fixes')}[/bold]")
+    console.print(f"  ✓ {t('msg_merged_vertices', n=report.merged_vertices)}")
+    console.print(f"  ✓ {t('msg_removed_degenerate', n=report.removed_degenerate)}")
+    console.print(f"  ✓ {t('msg_removed_duplicate', n=report.removed_duplicate)}")
+    console.print(f"  ✓ {t('msg_holes_filled', n=report.holes_filled)}")
     if report.method == "meshfix":
-        console.print("  ✓ Aggressive repair (pymeshfix) applied")
+        console.print(f"  ✓ {t('msg_aggressive_applied')}")
     console.print(
         f"\nWatertight: {report.watertight_before} → {report.watertight_after}  |  "
         f"Volume: {report.volume_after / 1000:.2f} cm³"
     )
-    console.print(f"Output: [cyan]{output}[/cyan]")
+    console.print(t("msg_output", path=f"[cyan]{output}[/cyan]"))
     if report.watertight_after:
-        console.print("[bold green]Status: READY FOR SLICING[/bold green]")
+        console.print(f"[bold green]{t('msg_status_ready')}[/bold green]")
     else:
         console.print(
             f"[bold yellow]Status: still not watertight — {report.open_edges_after} open "
@@ -143,24 +144,23 @@ def fix(path, output):
         )
 
 
-@main.command(help="Suggest slicer settings as a JSON profile.")
+@main.command(help=t("cmd_suggest_help"))
 @click.argument("path", type=click.Path())
 @click.option("--slicer", type=click.Choice(SLICER_NAMES), default="creality",
-              show_default=True, help="Target slicer.")
+              show_default=True, help=t("opt_suggest_slicer"))
 @click.option("--material", type=click.Choice(sorted(MATERIAL_PRESETS)), default="pla",
-              show_default=True, help="Filament material (ignored if --import-profile is given).")
+              show_default=True, help=t("opt_suggest_material"))
 @click.option("--import-profile", "import_profile", type=click.Path(),
-              help="Use a material profile exported from your slicer (.json/.ini/.fdm_material).")
+              help=t("opt_suggest_import"))
 @click.option("--export", "export_fmt", type=click.Choice(EXPORT_FORMATS),
-              help="Write slicer-importable profile files instead of printing JSON.")
+              help=t("opt_suggest_export"))
 @click.option("--out-dir", "out_dir", type=click.Path(), default=".",
-              show_default=True, help="Directory for --export output files.")
+              show_default=True, help=t("opt_suggest_outdir"))
 @click.option("--printer", default="", show_default=False,
-              help='Target printer name for --export orca (e.g. "Creality K1 Max 0.4 nozzle"). '
-                   "Becomes compatible_printers so the preset binds to that printer on import.")
+              help=t("opt_suggest_printer"))
 @click.option("--price-per-kg", "price_per_kg", type=float, default=None,
-              help="Filament price per kg (e.g. 25). Adds a cost estimate to the output.")
-@click.option("--currency", default="", help="Currency label shown next to cost (e.g. TL, USD, EUR).")
+              help=t("opt_suggest_price"))
+@click.option("--currency", default="", help=t("opt_suggest_currency"))
 def suggest(path, slicer, material, import_profile, export_fmt, out_dir, printer,
             price_per_kg, currency):
     try:
@@ -207,20 +207,20 @@ def suggest(path, slicer, material, import_profile, export_fmt, out_dir, printer
     cost_line = ""
     if estimate.cost is not None:
         cur = estimate.currency or ""
-        cost_line = f"  Maliyet         : {estimate.cost}{(' ' + cur) if cur else ''}\n"
+        cost_line = f"  Cost            : {estimate.cost}{(' ' + cur) if cur else ''}\n"
     console.print(
-        "\n[bold cyan]Tahmini baskı (~%70 hassas):[/bold cyan]\n"
+        "\n[bold cyan]Print estimate (~70% accurate):[/bold cyan]\n"
         f"  Filament        : {estimate.filament_length_mm / 1000:.2f} m  "
         f"({estimate.filament_weight_g:.1f} g)\n"
-        f"  Süre            : ~{_fmt_minutes(estimate.print_time_min)}\n"
+        f"  Time            : ~{_fmt_minutes(estimate.print_time_min)}\n"
         + cost_line
     )
 
 
-@main.command(help="Suggest the best print orientation and write a rotated STL.")
+@main.command(help=t("cmd_orient_help"))
 @click.argument("path", type=click.Path())
 @click.option("--output", "-o", required=True, type=click.Path(),
-              help="Where to write the re-oriented STL.")
+              help=t("opt_orient_output"))
 def orient(path, output):
     try:
         mesh = load_mesh(path)
@@ -232,26 +232,26 @@ def orient(path, output):
     try:
         oriented.export(output)
     except Exception as exc:
-        err_console.print(f"Could not write '{output}': {exc}")
+        err_console.print(t("err_could_not_write", path=output, err=exc))
         sys.exit(1)
 
     rx, ry, rz = report.euler_deg
-    console.print("[bold]Orientation suggestion:[/bold]")
-    console.print(f"  Rotation (XYZ euler): {rx}°, {ry}°, {rz}°")
+    console.print(f"[bold]{t('msg_orient_heading')}[/bold]")
+    console.print(f"  {t('msg_orient_rotation', rx=rx, ry=ry, rz=rz)}")
     console.print(
         f"  Overhang area: {report.overhang_before * 100:.1f}% → {report.overhang_after * 100:.1f}%"
     )
     if report.improved:
-        console.print("[bold green]Found a better orientation.[/bold green]")
+        console.print(f"[bold green]{t('msg_orient_better')}[/bold green]")
     else:
-        console.print("[yellow]Current orientation is already optimal — no rotation applied.[/yellow]")
-    console.print(f"Output: [cyan]{output}[/cyan]")
+        console.print(f"[yellow]{t('msg_orient_optimal')}[/yellow]")
+    console.print(t("msg_output", path=f"[cyan]{output}[/cyan]"))
 
 
-@main.command(help="Merge separate bodies into a single piece and write an STL.")
+@main.command(help=t("cmd_merge_help"))
 @click.argument("path", type=click.Path())
 @click.option("--output", "-o", required=True, type=click.Path(),
-              help="Where to write the merged STL.")
+              help=t("opt_merge_output"))
 def merge(path, output):
     try:
         mesh = load_mesh(path)
@@ -263,25 +263,24 @@ def merge(path, output):
     try:
         merged.export(output)
     except Exception as exc:
-        err_console.print(f"Could not write '{output}': {exc}")
+        err_console.print(t("err_could_not_write", path=output, err=exc))
         sys.exit(1)
 
-    console.print("[bold]Merge:[/bold]")
-    console.print(f"  Method: {report.method}")
-    console.print(f"  Bodies: {report.bodies_before} → {report.bodies_after}")
-    console.print(f"  Watertight: {report.watertight_after}  |  Volume: {report.volume_after / 1000:.2f} cm³")
+    console.print(f"[bold]{t('msg_merge_heading')}[/bold]")
+    console.print(f"  {t('msg_merge_method', method=report.method)}")
+    console.print(f"  {t('msg_merge_bodies', before=report.bodies_before, after=report.bodies_after)}")
+    console.print(f"  {t('msg_merge_watertight', wt=report.watertight_after, vol=f'{report.volume_after / 1000:.2f}')}")
     console.print(f"[dim]{report.note}[/dim]")
-    console.print(f"Output: [cyan]{output}[/cyan]")
+    console.print(t("msg_output", path=f"[cyan]{output}[/cyan]"))
 
 
-@main.command(name="slicer-discover",
-              help="List filament/process profiles found in locally installed slicers.")
+@main.command(name="slicer-discover", help=t("cmd_discover_help"))
 def slicer_discover():
     from printprep.slicer.discover import discover_profiles
     rows = discover_profiles()
     if not rows:
-        console.print("[yellow]No slicer profiles found in standard install locations.[/yellow]")
-        console.print("[dim]Slicer not installed or profiles are in a custom path.[/dim]")
+        console.print(f"[yellow]{t('msg_no_profiles')}[/yellow]")
+        console.print(f"[dim]{t('msg_no_profiles_hint')}[/dim]")
         return
 
     table = Table(title="Installed slicer profiles", title_style="bold cyan")
@@ -298,14 +297,14 @@ def slicer_discover():
     )
 
 
-@main.command(help="Analyze every STL in a folder and print a summary.")
+@main.command(help=t("cmd_batch_help"))
 @click.argument("directory", type=click.Path())
-@click.option("--pattern", default="*.stl", show_default=True, help="Glob pattern to match.")
-@click.option("--recursive", "-r", is_flag=True, help="Search sub-folders too.")
-@click.option("--json", "json_out", type=click.Path(), help="Write full results as JSON.")
+@click.option("--pattern", default="*.stl", show_default=True, help=t("opt_batch_pattern"))
+@click.option("--recursive", "-r", is_flag=True, help=t("opt_batch_recursive"))
+@click.option("--json", "json_out", type=click.Path(), help=t("opt_batch_json"))
 def batch(directory, pattern, recursive, json_out):
     if not os.path.isdir(directory):
-        err_console.print(f"Not a directory: {directory}")
+        err_console.print(t("err_not_a_directory", path=directory))
         sys.exit(1)
 
     if recursive:
@@ -314,7 +313,7 @@ def batch(directory, pattern, recursive, json_out):
         files = glob.glob(os.path.join(directory, pattern))
     files = sorted(f for f in files if os.path.isfile(f))
     if not files:
-        err_console.print(f"No files matching '{pattern}' in {directory}")
+        err_console.print(t("err_no_files_matching", pattern=pattern, dir=directory))
         sys.exit(1)
 
     table = Table(title=f"Batch analysis — {directory}", title_style="bold cyan")
@@ -347,35 +346,35 @@ def batch(directory, pattern, recursive, json_out):
 
     console.print(table)
     ok = sum(1 for r in results if "error" not in r)
-    console.print(f"\n{ok}/{len(files)} analyzed successfully.")
+    console.print("\n" + t("msg_batch_analyzed", ok=ok, total=len(files)))
 
     if json_out:
         with open(json_out, "w", encoding="utf-8") as fh:
             _json.dump(results, fh, indent=2)
-        console.print(f"Full results: [cyan]{json_out}[/cyan]")
+        console.print(t("msg_full_results", path=f"[cyan]{json_out}[/cyan]"))
 
 
-@main.command(help="Pack many STLs onto the printer bed and emit one combined STL per bed.")
+@main.command(help=t("cmd_pack_help"))
 @click.argument("directory", type=click.Path())
 @click.option("--bed", "bed_spec", default="420x420", show_default=True,
-              help="Bed size as WxD in mm (default 420x420 — fits Anycubic Kobra Max / Creality CR-10 Max).")
+              help=t("opt_pack_bed"))
 @click.option("--padding", default=5.0, show_default=True, type=float,
-              help="Gap between parts in mm.")
+              help=t("opt_pack_padding"))
 @click.option("--rotate/--no-rotate", default=True, show_default=True,
-              help="Allow 90° rotation about Z to improve fit.")
+              help=t("opt_pack_rotate"))
 @click.option("--pattern", default="*.stl", show_default=True)
 @click.option("--recursive", "-r", is_flag=True)
 @click.option("--out-dir", "out_dir", type=click.Path(), default=".",
-              show_default=True, help="Directory for packed STLs and layout.json.")
+              show_default=True, help=t("opt_pack_outdir"))
 def pack(directory, bed_spec, padding, rotate, pattern, recursive, out_dir):
     import trimesh
     try:
         bed_w, bed_d = (float(x) for x in bed_spec.lower().split("x", 1))
     except Exception:
-        err_console.print(f"Invalid --bed '{bed_spec}'. Expected like '420x420'.")
+        err_console.print(t("err_invalid_bed", bed=bed_spec))
         sys.exit(1)
     if not os.path.isdir(directory):
-        err_console.print(f"Not a directory: {directory}")
+        err_console.print(t("err_not_a_directory", path=directory))
         sys.exit(1)
 
     if recursive:
@@ -384,7 +383,7 @@ def pack(directory, bed_spec, padding, rotate, pattern, recursive, out_dir):
         files = glob.glob(os.path.join(directory, pattern))
     files = sorted(f for f in files if os.path.isfile(f))
     if not files:
-        err_console.print(f"No files matching '{pattern}' in {directory}")
+        err_console.print(t("err_no_files_matching", pattern=pattern, dir=directory))
         sys.exit(1)
 
     meshes = {}
@@ -400,7 +399,7 @@ def pack(directory, bed_spec, padding, rotate, pattern, recursive, out_dir):
         items.append((name, float(mesh.extents[0]), float(mesh.extents[1])))
 
     if not items:
-        err_console.print("Nothing to pack.")
+        err_console.print(t("err_nothing_to_pack"))
         sys.exit(1)
 
     layout = pack_layout(items, bed_size=(bed_w, bed_d), padding=padding,
@@ -455,9 +454,9 @@ def pack(directory, bed_spec, padding, rotate, pattern, recursive, out_dir):
         _json.dump(layout_json, fh, indent=2)
 
 
-@main.command(help="Launch the local web interface (browser UI).")
-@click.option("--host", default="127.0.0.1", show_default=True, help="Host to bind.")
-@click.option("--port", default=8000, show_default=True, type=int, help="Port to bind.")
+@main.command(help=t("cmd_serve_help"))
+@click.option("--host", default="127.0.0.1", show_default=True, help=t("opt_serve_host"))
+@click.option("--port", default=8000, show_default=True, type=int, help=t("opt_serve_port"))
 def serve(host, port):
     try:
         import uvicorn
@@ -468,12 +467,11 @@ def serve(host, port):
         )
         sys.exit(1)
 
-    console.print(f"PrintPrep web UI → [cyan]http://{host}:{port}[/cyan]  (Ctrl+C to stop)")
+    console.print(t("msg_web_running", url=f"[cyan]http://{host}:{port}[/cyan]"))
     uvicorn.run("printprep.web.app:app", host=host, port=port, log_level="info")
 
 
-@main.command(name="app",
-              help="Open as a native desktop window (needs the [desktop] extra).")
+@main.command(name="app", help=t("cmd_app_help"))
 @click.option("--host", default="127.0.0.1", show_default=True)
 @click.option("--port", default=8000, show_default=True, type=int)
 @click.option("--width", default=1100, type=int, show_default=True)

@@ -79,10 +79,12 @@ include = ["printprep*"]
 [tool.setuptools.package-data]
 printprep = [
     "config/*.json",
+    "locales/*.json",
     "web/static/*",
     "web/static/**/*",
     "web/static/vendor/*",
     "web/static/vendor/addons/*",
+    "web/static/locales/*.json",
 ]
 
 [tool.ruff]

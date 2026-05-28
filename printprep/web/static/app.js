@@ -5,11 +5,13 @@ import {
   getBodyCount, setMeasureMode, clearMeasurements, getMeasurements,
   setClipping, getModelBounds,
 } from "./viewer.js";
+import { init as i18nInit, t, setLang, getLang, onChange, SUPPORTED } from "./i18n.js";
 
 let currentFile = null;
 let originalFile = null;     // what the user uploaded (for the before/after toggle)
 let fixedBlob = null;        // last successful fix output
 let showingFixed = false;
+let lastAnalysis = null;     // cached so re-rendering on language change works
 
 const els = {
   dropZone: document.getElementById("drop-zone"),
@@ -70,12 +72,13 @@ const els = {
   batchCsv: document.getElementById("batch-csv"),
   batchStatus: document.getElementById("batch-status"),
   batchResult: document.getElementById("batch-result"),
+  langSelect: document.getElementById("lang-select"),
 };
 
 let importedProfile = null;
 let lastProfileJson = "";
+let lastProfilePayload = null;
 
-// Click an analysis issue -> enable the matching 3D highlight + scroll into view.
 function scrollToViewer() {
   els.viewerSection.scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -84,7 +87,7 @@ const ISSUE_ACTIONS = {
   holes: () => { els.holesToggle.checked = true; setHoles(true); scrollToViewer(); },
   thin: () => {
     els.thinToggle.checked = true;
-    showStatus("İnce duvar hesaplanıyor…", false);
+    showStatus(t("status_thin_computing"), false);
     setTimeout(() => { setThin(true); hideStatus(); scrollToViewer(); }, 30);
   },
   bodies: () => { els.bodiesToggle.checked = true; setBodies(true); scrollToViewer(); },
@@ -149,11 +152,11 @@ function handleFile(file) {
   loadModelFromFile(file)
     .then(() => {
       const n = getBodyCount();
-      els.bodyBadge.textContent = `${n} gövde`;
+      els.bodyBadge.textContent = t("body_badge", { n });
       els.bodyBadge.hidden = false;
       setBodies(false);
     })
-    .catch((err) => showStatus("3D önizleme hatası: " + err.message, true));
+    .catch((err) => showStatus(t("error_viewer_3d", { msg: err.message }), true));
   analyze();
 }
 
@@ -190,7 +193,6 @@ function refreshClip() {
   if (!bounds) return;
   const axis = els.clipAxis.value;
   const lo = bounds.min[axis], hi = bounds.max[axis];
-  // Configure slider range whenever axis changes or first enable.
   if (!els.clipSlider.dataset.axis || els.clipSlider.dataset.axis !== axis) {
     els.clipSlider.min = lo.toFixed(2);
     els.clipSlider.max = hi.toFixed(2);
@@ -207,8 +209,7 @@ els.clipSlider.addEventListener("input", refreshClip);
 els.clipFlip.addEventListener("change", refreshClip);
 els.holesToggle.addEventListener("change", () => setHoles(els.holesToggle.checked));
 els.thinToggle.addEventListener("change", () => {
-  if (els.thinToggle.checked) showStatus("İnce duvar hesaplanıyor…", false);
-  // defer so the status paints before the (blocking) raycast pass
+  if (els.thinToggle.checked) showStatus(t("status_thin_computing"), false);
   setTimeout(() => {
     setThin(els.thinToggle.checked);
     if (els.thinToggle.checked) hideStatus();
@@ -217,14 +218,15 @@ els.thinToggle.addEventListener("change", () => {
 
 // ---- analyze ----
 async function analyze() {
-  showStatus("Analiz ediliyor…", false);
+  showStatus(t("status_analyzing"), false);
   const form = new FormData();
   form.append("model", currentFile);
   try {
     const res = await fetch("/api/analyze", { method: "POST", body: form });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Analiz başarısız");
+    if (!res.ok) throw new Error(data.error || t("error_analyze_failed"));
     hideStatus();
+    lastAnalysis = data;
     renderResults(data);
   } catch (err) {
     showStatus(err.message, true);
@@ -238,7 +240,7 @@ function prop(label, value, cls) {
   return `<div class="prop"><span class="label">${label}</span>${v}</div>`;
 }
 
-function yn(b) { return b ? ["Evet", "ok"] : ["Hayır", "bad"]; }
+function yn(b) { return b ? [t("yes"), "ok"] : [t("no"), "bad"]; }
 
 function renderResults(d) {
   const dim = d.dimensions_mm.map((x) => x.toFixed(1)).join(" × ");
@@ -246,47 +248,54 @@ function renderResults(d) {
   const [wn, wnc] = yn(d.is_winding_consistent);
   const [pv, pvc] = yn(d.is_volume);
 
-  let overhang = "yok";
+  let overhang = t("none");
   if (d.overhang_face_count > 0) {
-    overhang = `${d.overhang_face_count} yüzey, max ${d.steepest_overhang_deg.toFixed(0)}° ` +
-      `(%${(d.overhang_area_fraction * 100).toFixed(1)} alan)`;
+    overhang = t("overhang_summary", {
+      count: d.overhang_face_count,
+      deg: d.steepest_overhang_deg.toFixed(0),
+      pct: (d.overhang_area_fraction * 100).toFixed(1),
+    });
   }
   const wall = d.wall_thickness
-    ? `min ${d.wall_thickness.min_mm.toFixed(2)} / p5 ${d.wall_thickness.p5_mm.toFixed(2)} / med ${d.wall_thickness.p50_mm.toFixed(2)} mm`
-    : "n/a";
+    ? t("wall_summary", {
+        min: d.wall_thickness.min_mm.toFixed(2),
+        p5: d.wall_thickness.p5_mm.toFixed(2),
+        p50: d.wall_thickness.p50_mm.toFixed(2),
+      })
+    : t("na");
   const holesSummary = (d.holes && d.holes.length > 0)
-    ? `${d.holes.length} (en büyük ${d.holes[0].perimeter_mm.toFixed(1)} mm)`
-    : (d.is_watertight ? "yok" : "—");
+    ? t("holes_summary", { count: d.holes.length, peri: d.holes[0].perimeter_mm.toFixed(1) })
+    : (d.is_watertight ? t("none") : "—");
 
   const rows = [
-    prop("Hacim", `${(d.volume_mm3 / 1000).toFixed(2)} cm³`),
-    prop("Yüzey alanı", `${(d.surface_area_mm2 / 100).toFixed(2)} cm²`),
-    prop("Boyut", `${dim} mm`),
-    prop("Üçgen / vertex", `${d.face_count} / ${d.vertex_count}`),
-    prop("Gövde sayısı", d.body_count),
-    prop("Su sızdırmaz", wt, wtc),
-    prop("Tutarlı normaller", wn, wnc),
-    prop("Basılabilir", pv, pvc),
-    prop("Bozuk yüzey", d.degenerate_faces),
-    prop("Çift yüzey", d.duplicate_faces),
-    prop("Overhang", overhang),
-    prop("Duvar kalınlığı", wall),
-    prop("Delikler", holesSummary),
+    prop(t("prop_volume"), `${(d.volume_mm3 / 1000).toFixed(2)} cm³`),
+    prop(t("prop_surface"), `${(d.surface_area_mm2 / 100).toFixed(2)} cm²`),
+    prop(t("prop_dimensions"), `${dim} mm`),
+    prop(t("prop_face_vertex"), `${d.face_count} / ${d.vertex_count}`),
+    prop(t("prop_body_count"), d.body_count),
+    prop(t("prop_watertight"), wt, wtc),
+    prop(t("prop_winding"), wn, wnc),
+    prop(t("prop_printable"), pv, pvc),
+    prop(t("prop_degenerate"), d.degenerate_faces),
+    prop(t("prop_duplicate"), d.duplicate_faces),
+    prop(t("prop_overhang"), overhang),
+    prop(t("prop_wall"), wall),
+    prop(t("prop_holes"), holesSummary),
   ];
   if (d.non_manifold_edges > 0) {
-    rows.push(prop("Non-manifold kenar", d.non_manifold_edges, "bad"));
+    rows.push(prop(t("prop_non_manifold"), d.non_manifold_edges, "bad"));
   }
   els.props.innerHTML = rows.join("");
 
   if (d.issues.length === 0) {
-    els.issues.innerHTML = `<li class="none">Sorun bulunamadı — baskıya hazır.</li>`;
+    els.issues.innerHTML = `<li class="none">${t("no_issues")}</li>`;
   } else {
     els.issues.innerHTML = d.issues.map((i) => {
       const text = typeof i === "string" ? i : i.text;
       const kind = (typeof i === "object" && i.kind) || "";
       const clickable = kind in ISSUE_ACTIONS;
       const cls = clickable ? "issue-row clickable" : "issue-row";
-      const hint = clickable ? ' <span class="issue-hint">3D\'de göster →</span>' : "";
+      const hint = clickable ? ` <span class="issue-hint">${t("issue_show_in_3d")}</span>` : "";
       return `<li class="${cls}" data-kind="${kind}">⚠ ${text}${hint}</li>`;
     }).join("");
     els.issues.querySelectorAll("li.clickable").forEach((li) => {
@@ -305,14 +314,14 @@ function renderResults(d) {
 els.fixBtn.addEventListener("click", async () => {
   if (!currentFile) return;
   els.fixBtn.disabled = true;
-  showStatus("Onarılıyor…", false);
+  showStatus(t("status_fixing"), false);
   const form = new FormData();
   form.append("model", currentFile);
   try {
     const res = await fetch("/api/fix", { method: "POST", body: form });
     if (!res.ok) {
       const data = await res.json();
-      throw new Error(data.error || "Onarım başarısız");
+      throw new Error(data.error || t("error_fix_failed"));
     }
     const blob = await res.blob();
     const name = (currentFile.name.replace(/\.stl$/i, "") || "model") + "_fixed.stl";
@@ -323,19 +332,20 @@ els.fixBtn.addEventListener("click", async () => {
     const method = res.headers.get("X-Method");
     const residual = after === "True"
       ? ""
-      : `<li>Kalan açık kenar: ${openEdges} (manuel onarım gerekebilir)</li>`;
+      : `<li>${t("fix_residual", { n: openEdges })}</li>`;
     const methodLine = method === "meshfix"
-      ? `<li>Yöntem: agresif onarım (pymeshfix)</li>`
+      ? `<li>${t("fix_method_meshfix")}</li>`
       : "";
+    const volumeCm3 = (parseFloat(res.headers.get("X-Volume-Mm3")) / 1000).toFixed(2);
     els.fixReport.innerHTML =
-      `<strong>Onarım tamamlandı</strong>` +
+      `<strong>${t("fix_done")}</strong>` +
       `<ul>` +
-      `<li>Su sızdırmaz: ${before} → ${after}</li>` +
+      `<li>${t("fix_watertight", { before, after })}</li>` +
       methodLine +
-      `<li>Birleştirilen vertex: ${res.headers.get("X-Merged-Vertices")}</li>` +
-      `<li>Silinen bozuk yüzey: ${res.headers.get("X-Removed-Degenerate")}</li>` +
-      `<li>Delikler kapatıldı: ${res.headers.get("X-Holes-Filled")}</li>` +
-      `<li>Hacim: ${(parseFloat(res.headers.get("X-Volume-Mm3")) / 1000).toFixed(2)} cm³</li>` +
+      `<li>${t("fix_merged_vertices", { n: res.headers.get("X-Merged-Vertices") })}</li>` +
+      `<li>${t("fix_removed_degenerate", { n: res.headers.get("X-Removed-Degenerate") })}</li>` +
+      `<li>${t("fix_holes_filled", { n: res.headers.get("X-Holes-Filled") })}</li>` +
+      `<li>${t("fix_volume", { vol: volumeCm3 })}</li>` +
       residual +
       `</ul>`;
     els.fixReport.hidden = false;
@@ -349,10 +359,9 @@ els.fixBtn.addEventListener("click", async () => {
     a.remove();
     URL.revokeObjectURL(url);
 
-    // Keep the repaired blob so the user can flip the viewer between before/after.
     fixedBlob = blob;
-    showingFixed = false;  // viewer still shows the original; the toggle reveals the repair
-    els.baToggle.textContent = "3D'de onarımı göster ↻";
+    showingFixed = false;
+    els.baToggle.textContent = t("ba_show_fix");
     els.baToggle.hidden = false;
     hideStatus();
   } catch (err) {
@@ -367,26 +376,24 @@ els.baToggle.addEventListener("click", () => {
   showingFixed = !showingFixed;
   const target = showingFixed ? fixedBlob : originalFile;
   currentFile = target;
-  els.baToggle.textContent = showingFixed
-    ? "3D'de orijinali göster ↻"
-    : "3D'de onarımı göster ↻";
+  els.baToggle.textContent = showingFixed ? t("ba_show_original") : t("ba_show_fix");
   loadModelFromFile(target).catch((err) =>
-    showStatus("3D önizleme hatası: " + err.message, true)
+    showStatus(t("error_viewer_3d", { msg: err.message }), true)
   );
 });
 
-// ---- orient (suggest best print position) ----
+// ---- orient ----
 els.orientBtn.addEventListener("click", async () => {
   if (!currentFile) return;
   els.orientBtn.disabled = true;
-  showStatus("En iyi pozisyon hesaplanıyor…", false);
+  showStatus(t("status_orienting"), false);
   const form = new FormData();
   form.append("model", currentFile);
   try {
     const res = await fetch("/api/orient", { method: "POST", body: form });
     if (!res.ok) {
       const data = await res.json();
-      throw new Error(data.error || "Oryantasyon başarısız");
+      throw new Error(data.error || t("error_orient_failed"));
     }
     const blob = await res.blob();
     const improved = res.headers.get("X-Improved") === "True";
@@ -395,15 +402,14 @@ els.orientBtn.addEventListener("click", async () => {
     const euler = res.headers.get("X-Euler-Deg");
 
     els.orientReport.innerHTML = improved
-      ? `<strong>Önerilen pozisyon uygulandı</strong><ul>` +
-        `<li>Döndürme (XYZ°): ${euler}</li>` +
-        `<li>Overhang alanı: %${before.toFixed(1)} → %${after.toFixed(1)}</li>` +
-        `</ul><span class="muted-note">3D önizleme yeni pozisyonu gösteriyor. Döndürülmüş STL indirildi.</span>`
-      : `<strong>Mevcut pozisyon zaten en iyisi</strong><br>` +
-        `<span class="muted-note">Overhang alanı %${before.toFixed(1)} — daha iyi bir yatırma bulunamadı.</span>`;
+      ? `<strong>${t("orient_applied")}</strong><ul>` +
+        `<li>${t("orient_rotation", { euler })}</li>` +
+        `<li>${t("orient_overhang", { before: before.toFixed(1), after: after.toFixed(1) })}</li>` +
+        `</ul><span class="muted-note">${t("orient_3d_hint")}</span>`
+      : `<strong>${t("orient_no_better")}</strong><br>` +
+        `<span class="muted-note">${t("orient_no_better_hint", { pct: before.toFixed(1) })}</span>`;
     els.orientReport.hidden = false;
 
-    // show the re-oriented model in the 3D viewer
     loadModelFromFile(blob).catch(() => {});
 
     if (improved) {
@@ -425,35 +431,35 @@ els.orientBtn.addEventListener("click", async () => {
   }
 });
 
-// ---- merge separate bodies into one piece ----
+// ---- merge ----
 els.mergeBtn.addEventListener("click", async () => {
   if (!currentFile) return;
   els.mergeBtn.disabled = true;
-  showStatus("Tek parçaya birleştiriliyor…", false);
+  showStatus(t("status_merging"), false);
   const form = new FormData();
   form.append("model", currentFile);
   try {
     const res = await fetch("/api/merge", { method: "POST", body: form });
     if (!res.ok) {
       const data = await res.json();
-      throw new Error(data.error || "Birleştirme başarısız");
+      throw new Error(data.error || t("error_merge_failed"));
     }
     const blob = await res.blob();
     const method = res.headers.get("X-Method");
     const before = res.headers.get("X-Bodies-Before");
     const after = res.headers.get("X-Bodies-After");
     const watertight = res.headers.get("X-Watertight-After");
-    const methodTr = method === "boolean" ? "boolean union (gerçek kaynaşma)" : "tek dosyada birleştirme";
+    const methodLabel = method === "boolean" ? t("merge_method_boolean") : t("merge_method_concat");
     els.mergeReport.innerHTML =
-      `<strong>Birleştirme tamamlandı</strong><ul>` +
-      `<li>Yöntem: ${methodTr}</li>` +
-      `<li>Gövde: ${before} → ${after}</li>` +
-      `<li>Su sızdırmaz: ${watertight}</li>` +
-      `</ul><span class="muted-note">3D önizleme birleşmiş modeli gösteriyor. STL indirildi.</span>`;
+      `<strong>${t("merge_done")}</strong><ul>` +
+      `<li>${t("merge_method", { method: methodLabel })}</li>` +
+      `<li>${t("merge_bodies", { before, after })}</li>` +
+      `<li>${t("merge_watertight", { value: watertight })}</li>` +
+      `</ul><span class="muted-note">${t("merge_3d_hint")}</span>`;
     els.mergeReport.hidden = false;
 
     loadModelFromFile(blob).then(() => {
-      els.bodyBadge.textContent = `${getBodyCount()} gövde`;
+      els.bodyBadge.textContent = t("body_badge", { n: getBodyCount() });
       els.bodyBadge.hidden = false;
     }).catch(() => {});
 
@@ -474,7 +480,7 @@ els.mergeBtn.addEventListener("click", async () => {
   }
 });
 
-// ---- profile import (option: use your own slicer profile) ----
+// ---- profile import ----
 els.importBtn.addEventListener("click", () => els.profileInput.click());
 els.profileInput.addEventListener("change", () => {
   if (els.profileInput.files.length) {
@@ -492,41 +498,44 @@ els.importClear.addEventListener("click", () => {
   els.materialSelect.disabled = false;
 });
 
-const PROFILE_LABELS = {
-  material: "Malzeme",
-  layer_height_mm: ["Katman yüksekliği", "mm"],
-  infill_pct: ["Infill", "%"],
-  wall_count: "Duvar sayısı",
-  supports: "Destek",
-  support_style: "Destek tipi",
-  brim: "Brim",
-  nozzle_temp_c: ["Nozzle sıcaklığı", "°C"],
-  bed_temp_c: ["Tabla sıcaklığı", "°C"],
-  print_speed_mms: ["Baskı hızı", "mm/s"],
-  max_volumetric_speed_mm3s: ["Maks. akış", "mm³/s"],
-  retraction_mm: ["Retraction", "mm"],
-  retraction_speed_mms: ["Retraction hızı", "mm/s"],
-};
+function profileLabels() {
+  return {
+    material: t("label_material"),
+    layer_height_mm: [t("prop_layer_height") || "Layer height", "mm"],
+    infill_pct: ["Infill", "%"],
+    wall_count: t("prop_walls") || "Walls",
+    supports: t("prop_supports") || "Supports",
+    support_style: t("prop_support_style") || "Support style",
+    brim: "Brim",
+    nozzle_temp_c: [t("prop_nozzle_temp") || "Nozzle temp", "°C"],
+    bed_temp_c: [t("prop_bed_temp") || "Bed temp", "°C"],
+    print_speed_mms: [t("prop_print_speed") || "Print speed", "mm/s"],
+    max_volumetric_speed_mm3s: [t("prop_max_flow") || "Max flow", "mm³/s"],
+    retraction_mm: ["Retraction", "mm"],
+    retraction_speed_mms: [t("prop_retraction_speed") || "Retraction speed", "mm/s"],
+  };
+}
 
 function fmtVal(v, unit) {
-  if (typeof v === "boolean") return v ? "Evet" : "Hayır";
+  if (typeof v === "boolean") return v ? t("yes") : t("no");
   return unit ? `${v} ${unit}` : `${v}`;
 }
 
 function fmtMinutes(m) {
   if (m == null) return "—";
-  if (m < 60) return `${Math.round(m)} dk`;
+  if (m < 60) return `${Math.round(m)} ${t("minute_short")}`;
   const h = Math.floor(m / 60), mm = Math.round(m - h * 60);
-  return `${h} sa ${mm} dk`;
+  return `${h} ${t("hour_short")} ${mm} ${t("minute_short")}`;
 }
 
 function renderProfile(payload) {
-  // Backwards-compat: api/suggest may return either {profile, estimate} or a flat profile.
   const data = payload && payload.profile ? payload.profile : payload;
   const estimate = payload && payload.estimate ? payload.estimate : null;
+  lastProfilePayload = payload;
 
   els.profileTitle.textContent = `${data.slicer} · ${data.material}`;
-  els.profileGrid.innerHTML = Object.entries(PROFILE_LABELS).map(([key, label]) => {
+  const labels = profileLabels();
+  els.profileGrid.innerHTML = Object.entries(labels).map(([key, label]) => {
     if (!(key in data)) return "";
     const [text, unit] = Array.isArray(label) ? label : [label, ""];
     return prop(text, fmtVal(data[key], unit));
@@ -536,14 +545,14 @@ function renderProfile(payload) {
 
   if (estimate) {
     const rows = [
-      prop("Filament",
+      prop(t("prop_filament") || "Filament",
            `${(estimate.filament_length_mm / 1000).toFixed(2)} m  ` +
            `(${estimate.filament_weight_g.toFixed(1)} g)`),
-      prop("Tahmini süre", fmtMinutes(estimate.print_time_min)),
+      prop(t("prop_time") || "Estimated time", fmtMinutes(estimate.print_time_min)),
     ];
     if (estimate.cost != null) {
       const cur = estimate.currency ? ` ${estimate.currency}` : "";
-      rows.push(prop("Maliyet", `${estimate.cost.toFixed(2)}${cur}`));
+      rows.push(prop(t("prop_cost") || "Cost", `${estimate.cost.toFixed(2)}${cur}`));
     }
     els.estimateGrid.innerHTML = rows.join("");
     els.estimateBlock.hidden = false;
@@ -570,7 +579,7 @@ els.suggestBtn.addEventListener("click", async () => {
   try {
     const res = await fetch("/api/suggest", { method: "POST", body: form });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Öneri başarısız");
+    if (!res.ok) throw new Error(data.error || t("error_suggest_failed"));
     renderProfile(data);
   } catch (err) {
     showStatus(err.message, true);
@@ -582,19 +591,19 @@ els.suggestBtn.addEventListener("click", async () => {
 els.copyJson.addEventListener("click", async () => {
   try {
     await navigator.clipboard.writeText(lastProfileJson);
-    els.copyJson.textContent = "kopyalandı ✓";
-    setTimeout(() => (els.copyJson.textContent = "JSON kopyala"), 1500);
+    els.copyJson.textContent = t("copy_done");
+    setTimeout(() => (els.copyJson.textContent = t("copy_json")), 1500);
   } catch (_) {
-    els.profileOutput.hidden = !els.profileOutput.hidden; // fallback: reveal raw JSON
+    els.profileOutput.hidden = !els.profileOutput.hidden;
   }
 });
 
-// ---- export importable slicer profile (.zip) ----
+// ---- export ----
 els.exportBtn.addEventListener("click", async () => {
   if (!currentFile) return;
   const fmt = els.exportFormat.value;
   els.exportBtn.disabled = true;
-  showStatus("Profil dışa aktarılıyor…", false);
+  showStatus(t("status_exporting"), false);
   const form = new FormData();
   form.append("model", currentFile);
   form.append("slicer", els.slicerSelect.value);
@@ -607,7 +616,7 @@ els.exportBtn.addEventListener("click", async () => {
     const res = await fetch("/api/export", { method: "POST", body: form });
     if (!res.ok) {
       const data = await res.json();
-      throw new Error(data.error || "Dışa aktarma başarısız");
+      throw new Error(data.error || t("error_export_failed"));
     }
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
@@ -618,9 +627,7 @@ els.exportBtn.addEventListener("click", async () => {
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
-    els.exportHint.textContent = fmt === "orca"
-      ? "OrcaSlicer/Creality Print: .json dosyalarını uygulamaya sürükle veya preset olarak içe aktar."
-      : "PrusaSlicer: File > Import > Import Config ile .ini'yi yükle.";
+    els.exportHint.textContent = fmt === "orca" ? t("export_hint_orca") : t("export_hint_prusa");
     hideStatus();
   } catch (err) {
     showStatus(err.message, true);
@@ -638,7 +645,6 @@ els.exportBtn.addEventListener("click", async () => {
       .map((s) => `<option value="${s}">${s}</option>`).join("");
     els.materialSelect.innerHTML = opts.materials
       .map((m) => `<option value="${m}">${m.toUpperCase()}</option>`).join("");
-    // Sensible defaults (match the CLI): Creality + PLA.
     if (opts.slicers.includes("creality")) els.slicerSelect.value = "creality";
     if (opts.materials.includes("pla")) els.materialSelect.value = "pla";
   } catch (_) { /* options endpoint unavailable */ }
@@ -648,37 +654,48 @@ els.exportBtn.addEventListener("click", async () => {
 let batchRows = [];
 let batchSort = { idx: null, dir: 1 };
 
-const BATCH_COLS = [
-  { label: "Dosya", text: (r) => r.filename, sort: (r) => r.filename || "" },
-  { label: "Boyut (mm)", text: (r) => r.dimensions_mm ? r.dimensions_mm.map((x) => x.toFixed(0)).join("×") : "—",
-    sort: (r) => r.dimensions_mm ? r.dimensions_mm[0] * r.dimensions_mm[1] * r.dimensions_mm[2] : -1 },
-  { label: "Hacim (cm³)", text: (r) => r.volume_cm3 != null ? r.volume_cm3 : "—", sort: (r) => r.volume_cm3 ?? -1 },
-  { label: "Su sızdırmaz", text: (r) => r.error ? "—" : (r.is_watertight ? "Evet" : "Hayır"), sort: (r) => (r.is_watertight ? 1 : 0) },
-  { label: "Gövde", text: (r) => r.body_count ?? "—", sort: (r) => r.body_count ?? -1 },
-  { label: "Overhang %", text: (r) => r.overhang_pct != null ? r.overhang_pct : "—", sort: (r) => r.overhang_pct ?? -1 },
-  { label: "Min duvar", text: (r) => r.min_wall_mm != null ? r.min_wall_mm.toFixed(2) : "—", sort: (r) => r.min_wall_mm ?? -1 },
-  { label: "Sorun", text: (r) => r.error ? "hata" : r.issue_count, sort: (r) => r.error ? 999 : (r.issue_count ?? 0) },
-];
+function batchCols() {
+  return [
+    { key: "file", label: t("batch_col_file"), text: (r) => r.filename, sort: (r) => r.filename || "" },
+    { key: "dim", label: t("batch_col_dim"),
+      text: (r) => r.dimensions_mm ? r.dimensions_mm.map((x) => x.toFixed(0)).join("×") : "—",
+      sort: (r) => r.dimensions_mm ? r.dimensions_mm[0] * r.dimensions_mm[1] * r.dimensions_mm[2] : -1 },
+    { key: "vol", label: t("batch_col_vol"),
+      text: (r) => r.volume_cm3 != null ? r.volume_cm3 : "—", sort: (r) => r.volume_cm3 ?? -1 },
+    { key: "wt", label: t("batch_col_watertight"),
+      text: (r) => r.error ? "—" : (r.is_watertight ? t("yes") : t("no")),
+      sort: (r) => (r.is_watertight ? 1 : 0) },
+    { key: "body", label: t("batch_col_body"),
+      text: (r) => r.body_count ?? "—", sort: (r) => r.body_count ?? -1 },
+    { key: "over", label: t("batch_col_overhang"),
+      text: (r) => r.overhang_pct != null ? r.overhang_pct : "—", sort: (r) => r.overhang_pct ?? -1 },
+    { key: "wall", label: t("batch_col_min_wall"),
+      text: (r) => r.min_wall_mm != null ? r.min_wall_mm.toFixed(2) : "—", sort: (r) => r.min_wall_mm ?? -1 },
+    { key: "issue", label: t("batch_col_issues"),
+      text: (r) => r.error ? t("batch_err") : r.issue_count, sort: (r) => r.error ? 999 : (r.issue_count ?? 0) },
+  ];
+}
 
 function renderBatch() {
+  const cols = batchCols();
   if (batchRows.length === 0) { els.batchResult.innerHTML = ""; return; }
   let rows = batchRows.slice();
   if (batchSort.idx != null) {
-    const col = BATCH_COLS[batchSort.idx];
+    const col = cols[batchSort.idx];
     rows.sort((a, b) => {
       const va = col.sort(a), vb = col.sort(b);
       return (va < vb ? -1 : va > vb ? 1 : 0) * batchSort.dir;
     });
   }
-  const head = BATCH_COLS.map((c, i) => {
+  const head = cols.map((c, i) => {
     const arrow = batchSort.idx === i ? (batchSort.dir === 1 ? " ▲" : " ▼") : "";
     return `<th data-idx="${i}">${c.label}${arrow}</th>`;
   }).join("");
   const body = rows.map((r) => {
     if (r.error) {
-      return `<tr><td>${r.filename}</td><td colspan="${BATCH_COLS.length - 1}" class="batch-err">${r.error}</td></tr>`;
+      return `<tr><td>${r.filename}</td><td colspan="${cols.length - 1}" class="batch-err">${r.error}</td></tr>`;
     }
-    return "<tr>" + BATCH_COLS.map((c) => `<td>${c.text(r)}</td>`).join("") + "</tr>";
+    return "<tr>" + cols.map((c) => `<td>${c.text(r)}</td>`).join("") + "</tr>";
   }).join("");
   els.batchResult.innerHTML = `<table class="batch-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
   els.batchResult.querySelectorAll("th[data-idx]").forEach((th) => {
@@ -695,30 +712,31 @@ els.batchBtn.addEventListener("click", () => els.batchInput.click());
 els.batchInput.addEventListener("change", async () => {
   const files = [...els.batchInput.files];
   if (files.length === 0) return;
-  els.batchStatus.textContent = `${files.length} dosya analiz ediliyor…`;
+  els.batchStatus.textContent = t("batch_status_analyzing", { n: files.length });
   els.batchCsv.hidden = true;
   const form = new FormData();
   files.forEach((f) => form.append("files", f));
   try {
     const res = await fetch("/api/batch", { method: "POST", body: form });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Toplu analiz başarısız");
+    if (!res.ok) throw new Error(data.error || t("error_batch_failed"));
     batchRows = data.results;
     batchSort = { idx: null, dir: 1 };
     renderBatch();
     const ok = batchRows.filter((r) => !r.error).length;
-    els.batchStatus.textContent = `${ok}/${batchRows.length} analiz edildi.`;
+    els.batchStatus.textContent = t("batch_status_done", { ok, total: batchRows.length });
     els.batchCsv.hidden = batchRows.length === 0;
   } catch (err) {
-    els.batchStatus.textContent = "Hata: " + err.message;
+    els.batchStatus.textContent = t("batch_status_error", { msg: err.message });
   }
 });
 
 els.batchCsv.addEventListener("click", () => {
-  const header = BATCH_COLS.map((c) => c.label).join(",");
+  const cols = batchCols();
+  const header = cols.map((c) => c.label).join(",");
   const lines = batchRows.map((r) =>
-    BATCH_COLS.map((c) => {
-      const v = r.error && c.label !== "Dosya" ? "" : String(c.text(r)).replace(/×/g, "x");
+    cols.map((c) => {
+      const v = r.error && c.key !== "file" ? "" : String(c.text(r)).replace(/×/g, "x");
       return /[",]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
     }).join(","),
   );
@@ -732,3 +750,27 @@ els.batchCsv.addEventListener("click", () => {
   a.remove();
   URL.revokeObjectURL(url);
 });
+
+// ---- language switcher init ----
+async function bootI18n() {
+  await i18nInit();
+  els.langSelect.innerHTML = SUPPORTED
+    .map((l) => `<option value="${l.code}">${l.name}</option>`).join("");
+  els.langSelect.value = getLang();
+  els.langSelect.addEventListener("change", () => setLang(els.langSelect.value));
+
+  // Re-render dynamic content whenever the language changes.
+  onChange(() => {
+    els.langSelect.value = getLang();
+    if (lastAnalysis) renderResults(lastAnalysis);
+    if (lastProfilePayload) renderProfile(lastProfilePayload);
+    if (batchRows.length) renderBatch();
+    if (!els.baToggle.hidden) {
+      els.baToggle.textContent = showingFixed ? t("ba_show_original") : t("ba_show_fix");
+    }
+    if (els.bodyBadge && !els.bodyBadge.hidden) {
+      try { els.bodyBadge.textContent = t("body_badge", { n: getBodyCount() }); } catch (_) {}
+    }
+  });
+}
+bootI18n();

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PrintPrep — STL Analiz & Slicer Öneri</title>
+  <title data-i18n="title">PrintPrep</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="/style.css">
   <script type="importmap">
@@ -16,17 +16,23 @@
 </head>
 <body>
   <header>
-    <h1>PrintPrep</h1>
-    <p class="subtitle">STL model analizi, onarım ve slicer ayar önerisi</p>
+    <div class="header-row">
+      <h1>PrintPrep</h1>
+      <label class="lang-switch">
+        <span data-i18n="lang_label">Language</span>
+        <select id="lang-select"></select>
+      </label>
+    </div>
+    <p class="subtitle" data-i18n="header_subtitle">STL model analysis, repair and slicer profile suggestion</p>
   </header>
 
   <main>
     <section id="drop-zone" class="drop-zone">
       <input type="file" id="file-input" accept=".stl" hidden>
       <div class="drop-inner">
-        <p class="drop-title">STL dosyanı buraya sürükle</p>
-        <p class="drop-or">veya</p>
-        <button type="button" id="browse-btn" class="btn">Dosya seç</button>
+        <p class="drop-title" data-i18n="drop_title">Drop your STL file here</p>
+        <p class="drop-or" data-i18n="drop_or">or</p>
+        <button type="button" id="browse-btn" class="btn" data-i18n="browse_btn">Choose file</button>
         <p id="file-name" class="file-name"></p>
       </div>
     </section>
@@ -35,126 +41,126 @@
 
     <section id="viewer-section" class="card" hidden>
       <div class="viewer-head">
-        <h2>3D Önizleme</h2>
+        <h2 data-i18n="viewer_heading">3D preview</h2>
         <div class="toggles">
           <label class="toggle">
-            <input type="checkbox" id="overhang-toggle" checked> Overhang
+            <input type="checkbox" id="overhang-toggle" checked> <span data-i18n="toggle_overhang">Overhang</span>
           </label>
           <label class="toggle">
-            <input type="checkbox" id="holes-toggle" checked> Delikler
+            <input type="checkbox" id="holes-toggle" checked> <span data-i18n="toggle_holes">Holes</span>
           </label>
           <label class="toggle">
-            <input type="checkbox" id="thin-toggle"> İnce duvar
+            <input type="checkbox" id="thin-toggle"> <span data-i18n="toggle_thin">Thin walls</span>
           </label>
           <label class="toggle">
-            <input type="checkbox" id="bodies-toggle"> Gövdeler
+            <input type="checkbox" id="bodies-toggle"> <span data-i18n="toggle_bodies">Bodies</span>
           </label>
           <label class="toggle">
-            <input type="checkbox" id="inverted-toggle"> Ters yüzey
+            <input type="checkbox" id="inverted-toggle"> <span data-i18n="toggle_inverted">Inverted faces</span>
           </label>
           <span id="body-badge" class="body-badge" hidden></span>
         </div>
       </div>
       <div id="viewer" class="viewer"></div>
       <div class="viewer-legend">
-        <span class="legend-item"><span class="swatch swatch-over"></span>Overhang</span>
-        <span class="legend-item"><span class="swatch swatch-thin"></span>İnce duvar (örneklem)</span>
-        <span class="legend-item"><span class="swatch swatch-hole"></span>Delik / açık kenar</span>
-        <span class="legend-item"><span class="swatch swatch-inv"></span>Ters yüzey (winding)</span>
-        <span class="legend-item"><span class="swatch swatch-ok"></span>Normal yüzey</span>
+        <span class="legend-item"><span class="swatch swatch-over"></span><span data-i18n="legend_overhang">Overhang</span></span>
+        <span class="legend-item"><span class="swatch swatch-thin"></span><span data-i18n="legend_thin">Thin wall (sampled)</span></span>
+        <span class="legend-item"><span class="swatch swatch-hole"></span><span data-i18n="legend_hole">Hole / open edge</span></span>
+        <span class="legend-item"><span class="swatch swatch-inv"></span><span data-i18n="legend_inv">Inverted face (winding)</span></span>
+        <span class="legend-item"><span class="swatch swatch-ok"></span><span data-i18n="legend_ok">Normal face</span></span>
       </div>
-      <p class="viewer-hint">Döndür: sürükle · Yakınlaş: tekerlek · Kaydır: sağ tık-sürükle</p>
+      <p class="viewer-hint" data-i18n="viewer_hint">Rotate: drag · Zoom: wheel · Pan: right-click drag</p>
 
       <div class="viewer-tools">
         <div class="tool-block">
-          <label class="toggle"><input type="checkbox" id="measure-toggle"> 📏 Ölçüm modu</label>
-          <button type="button" id="measure-clear" class="btn-link" hidden>temizle</button>
-          <p class="muted-note" id="measure-hint" hidden>Modelde iki noktaya tıkla — mesafeyi gösterir.</p>
+          <label class="toggle"><input type="checkbox" id="measure-toggle"> <span data-i18n="tool_measure">📏 Measure mode</span></label>
+          <button type="button" id="measure-clear" class="btn-link" hidden data-i18n="tool_clear">clear</button>
+          <p class="muted-note" id="measure-hint" hidden data-i18n="measure_hint">Click two points on the model — distance will be shown.</p>
           <ol id="measure-list" class="measure-list"></ol>
         </div>
         <div class="tool-block">
-          <label class="toggle"><input type="checkbox" id="clip-toggle"> ✂️ Kesit</label>
+          <label class="toggle"><input type="checkbox" id="clip-toggle"> <span data-i18n="tool_clip">✂️ Cross-section</span></label>
           <div class="clip-row" id="clip-controls" hidden>
-            <label>Eksen
+            <label><span data-i18n="clip_axis_label">Axis</span>
               <select id="clip-axis">
-                <option value="z" selected>Z (yatay düzlem)</option>
-                <option value="y">Y</option>
-                <option value="x">X</option>
+                <option value="z" selected data-i18n="clip_axis_z">Z (horizontal plane)</option>
+                <option value="y" data-i18n="clip_axis_y">Y</option>
+                <option value="x" data-i18n="clip_axis_x">X</option>
               </select>
             </label>
             <input type="range" id="clip-slider" step="0.1">
             <span id="clip-value" class="muted-note">—</span>
-            <label class="toggle"><input type="checkbox" id="clip-flip"> Diğer taraf</label>
+            <label class="toggle"><input type="checkbox" id="clip-flip"> <span data-i18n="clip_flip">Other side</span></label>
           </div>
         </div>
       </div>
     </section>
 
     <section id="results" class="card" hidden>
-      <h2>Analiz Sonucu</h2>
+      <h2 data-i18n="results_heading">Analysis result</h2>
       <div id="props" class="props"></div>
-      <h3>Sorunlar</h3>
+      <h3 data-i18n="issues_heading">Issues</h3>
       <ul id="issues" class="issues"></ul>
 
       <div class="actions">
-        <button type="button" id="fix-btn" class="btn btn-primary">Onar ve indir</button>
-        <button type="button" id="orient-btn" class="btn">En iyi pozisyona yatır</button>
-        <button type="button" id="merge-btn" class="btn">Tek parçaya birleştir</button>
+        <button type="button" id="fix-btn" class="btn btn-primary" data-i18n="fix_btn">Repair and download</button>
+        <button type="button" id="orient-btn" class="btn" data-i18n="orient_btn">Orient to best pose</button>
+        <button type="button" id="merge-btn" class="btn" data-i18n="merge_btn">Merge into one piece</button>
       </div>
       <div id="fix-report" class="fix-report" hidden></div>
-      <button type="button" id="ba-toggle" class="btn btn-ghost ba-toggle" hidden>3D'de onarımı göster ↻</button>
+      <button type="button" id="ba-toggle" class="btn btn-ghost ba-toggle" hidden data-i18n="ba_show_fix">Show repair in 3D ↻</button>
       <div id="orient-report" class="fix-report" hidden></div>
       <div id="merge-report" class="fix-report" hidden></div>
     </section>
 
     <section id="suggest-section" class="card" hidden>
-      <h2>Slicer Ayar Önerisi</h2>
+      <h2 data-i18n="suggest_heading">Slicer profile suggestion</h2>
       <div class="suggest-controls">
-        <label>Slicer
+        <label><span data-i18n="label_slicer">Slicer</span>
           <select id="slicer-select"></select>
         </label>
-        <label>Malzeme
+        <label><span data-i18n="label_material">Material</span>
           <select id="material-select"></select>
         </label>
-        <label>Filament fiyatı (opsiyonel)
+        <label><span data-i18n="label_price">Filament price (optional)</span>
           <span class="price-wrap">
-            <input type="number" id="price-input" min="0" step="1" placeholder="örn. 1200">
-            <input type="text" id="currency-input" placeholder="TL" maxlength="6">
+            <input type="number" id="price-input" min="0" step="1" data-i18n-placeholder="price_placeholder">
+            <input type="text" id="currency-input" data-i18n-placeholder="currency_placeholder" maxlength="6">
           </span>
         </label>
-        <button type="button" id="suggest-btn" class="btn btn-primary">Profil üret</button>
+        <button type="button" id="suggest-btn" class="btn btn-primary" data-i18n="suggest_btn">Generate profile</button>
       </div>
 
       <div class="import-row">
         <input type="file" id="profile-input" accept=".json,.ini,.fdm_material,.xml" hidden>
-        <button type="button" id="import-btn" class="btn btn-ghost">Kendi profilini içe aktar</button>
+        <button type="button" id="import-btn" class="btn btn-ghost" data-i18n="import_btn">Import your own profile</button>
         <span id="profile-file" class="import-name"></span>
-        <button type="button" id="import-clear" class="btn-link" hidden>temizle</button>
+        <button type="button" id="import-clear" class="btn-link" hidden data-i18n="tool_clear">clear</button>
       </div>
 
       <div id="profile-result" hidden>
         <div class="profile-head">
           <span id="profile-title" class="profile-title"></span>
-          <button type="button" id="copy-json" class="btn-link">JSON kopyala</button>
+          <button type="button" id="copy-json" class="btn-link" data-i18n="copy_json">Copy JSON</button>
         </div>
         <div id="profile-grid" class="props"></div>
         <pre id="profile-output" class="profile" hidden></pre>
 
         <div id="estimate-block" class="estimate-block" hidden>
-          <h3>Tahmini baskı <span class="muted-note">(~%70 hassas)</span></h3>
+          <h3><span data-i18n="estimate_heading">Print estimate</span> <span class="muted-note" data-i18n="estimate_accuracy">(~70% accurate)</span></h3>
           <div id="estimate-grid" class="props"></div>
         </div>
 
         <div class="export-row">
-          <label>Aktarım formatı
+          <label><span data-i18n="label_export_format">Export format</span>
             <select id="export-format">
               <option value="orca">OrcaSlicer / Creality Print / Anycubic Slicer (.json)</option>
               <option value="prusa">PrusaSlicer / SuperSlicer (.ini)</option>
             </select>
           </label>
-          <label>Hedef yazıcı (opsiyonel)
+          <label><span data-i18n="label_export_printer">Target printer (optional)</span>
             <input id="export-printer" type="text" list="printer-options"
-                   placeholder='örn. "Creality K1 Max 0.4 nozzle"'>
+                   data-i18n-placeholder="export_printer_placeholder">
             <datalist id="printer-options">
               <option value="Creality K1 Max 0.4 nozzle">
               <option value="Creality K1 0.4 nozzle">
@@ -164,19 +170,19 @@
               <option value="Anycubic Kobra S1 0.4 nozzle">
             </datalist>
           </label>
-          <button type="button" id="export-btn" class="btn">Slicer'a aktar (.zip indir)</button>
+          <button type="button" id="export-btn" class="btn" data-i18n="export_btn">Export to slicer (download .zip)</button>
         </div>
         <span id="export-hint" class="muted-note"></span>
       </div>
     </section>
 
     <section class="card">
-      <h2>Toplu Analiz</h2>
-      <p class="muted-note">Birden çok STL seç; her biri için özet tablo. Başlığa tıklayarak sırala.</p>
+      <h2 data-i18n="batch_heading">Batch analysis</h2>
+      <p class="muted-note" data-i18n="batch_intro">Select multiple STLs; you get a summary table for each. Click a header to sort.</p>
       <div class="batch-controls">
         <input type="file" id="batch-input" accept=".stl" multiple hidden>
-        <button type="button" id="batch-btn" class="btn">STL'leri seç ve analiz et</button>
-        <button type="button" id="batch-csv" class="btn btn-ghost" hidden>CSV indir</button>
+        <button type="button" id="batch-btn" class="btn" data-i18n="batch_btn">Select STLs and analyze</button>
+        <button type="button" id="batch-csv" class="btn btn-ghost" hidden data-i18n="batch_csv">Download CSV</button>
       </div>
       <div id="batch-status" class="muted-note"></div>
       <div id="batch-result"></div>
@@ -184,8 +190,8 @@
   </main>
 
   <footer>
-    <p>Yerel çalışır · veriler bilgisayarından çıkmaz</p>
-    <p class="footer-src">Malzeme ön ayarları: <a href="https://github.com/SoftFever/OrcaSlicer" target="_blank" rel="noopener">OrcaSlicer</a> açık kaynak filament kütüphanesi · Geometri analizi modelden hesaplanır</p>
+    <p data-i18n="footer_local">Runs locally · your data never leaves the machine</p>
+    <p class="footer-src" data-i18n-html="footer_src">Material presets: <a href="https://github.com/SoftFever/OrcaSlicer" target="_blank" rel="noopener">OrcaSlicer</a> open-source filament library · Geometry analysis computed from the model</p>
   </footer>
 
   <script type="module" src="/app.js"></script>
