@@ -1,92 +1,115 @@
 # PrintPrep
 
-STL model analizi ve slicer ayar önerisi aracı.
+**English** | [Türkçe](README.tr.md)
 
-3D baskı modellerinizdeki sorunları tespit edin, slicer ayarlarınızı otomatik önerin.
+STL model analysis and slicer-profile suggestion tool.
 
-## Özellikler
+Spot likely print problems before you slice, and get slicer settings tailored
+to your model.
 
-- **Model Analizi**: Overlapping geometry, thin walls, inverted normals tespiti
-- **Sorun Tespiti**: Baskı öncesi potansiyel hataların belirlenmesi
-- **Slicer Önerileri**: Creality Print ve AnycubicSlicerNext için ayar profilleri
-- **Model Onarım**: Temel mesh onarım işlemleri
+## Features
 
-## Kurulum
+- **Model analysis** — overlapping geometry, thin walls, inverted normals,
+  open edges / holes, separate bodies, non-manifold edges, self-intersections.
+- **Problem detection** — identify potential failures before you start the
+  print.
+- **Slicer suggestions** — profile presets for Creality Print and
+  AnycubicSlicerNext.
+- **Mesh repair** — basic repair plus optional aggressive escalation via
+  `pymeshfix` with a guard that rejects mangled results.
+- **100% local** — model data never leaves your machine. No accounts, no
+  telemetry.
+
+## Install
 
 ```bash
 pip install printprep
 ```
 
-## Hızlı Başlangıç
+## Quick start
 
 ```bash
-# Model analizi
+# Analyze a model
 printprep analyze model.stl
 
-# Sorun düzeltme
+# Repair common issues
 printprep fix model.stl --output fixed_model.stl
 
-# En iyi baskı pozisyonuna yatır
+# Auto-orient to the best print pose
 printprep orient model.stl --output oriented_model.stl
 
-# Ayrı gövdeleri tek parçaya birleştir (boolean union için: pip install -e ".[merge]")
+# Merge separate bodies into one piece
+# (boolean union requires: pip install -e ".[merge]")
 printprep merge model.stl --output merged_model.stl
 
-# Agresif onarım (inatçı meshler için, opsiyonel): pip install -e ".[repair]"
-#   fix komutu standart onarım yetmezse otomatik olarak pymeshfix'e yükselir
-#   (geometriyi bozacaksa güvenlik koruması devreye girip standart sonucu korur)
+# Aggressive repair (optional, for stubborn meshes): pip install -e ".[repair]"
+#   `fix` automatically escalates to pymeshfix when the standard repair isn't
+#   enough. If the escalation would damage the geometry, a safety guard kicks
+#   in and the standard result is kept.
 
-# Bir klasördeki tüm STL'leri toplu analiz et
+# Batch-analyze every STL in a folder
 printprep batch ./models --json report.json
 
-# Slicer ayar önerisi
+# Slicer profile suggestion
 printprep suggest model.stl --slicer creality --material pla
 
-# Kendi slicer profilini kullan (OrcaSlicer .json / PrusaSlicer .ini / Cura .fdm_material)
+# Import your own slicer profile (OrcaSlicer .json / PrusaSlicer .ini / Cura .fdm_material)
 printprep suggest model.stl --slicer creality --import-profile my_filament.json
 
-# Slicer'a doğrudan yüklenebilir profil dosyaları üret
+# Export a profile that loads directly into your slicer
 #   orca  -> OrcaSlicer / Creality Print / Anycubic Slicer (.json: filament + process)
 #   prusa -> PrusaSlicer / SuperSlicer (.ini)
 printprep suggest model.stl --slicer anycubic --material petg --export orca --out-dir ./profiles
 ```
 
-## Web Arayüzü
+## Web UI
 
-Tarayıcıda 3D önizleme, sürükle-bırak analiz, onarım ve slicer önerisi:
+3D preview, drag-and-drop analysis, repair, and slicer suggestions — all in
+the browser:
 
 ```bash
-pip install -e ".[web]"   # tek seferlik
+pip install -e ".[web]"   # one-time
 printprep serve           # http://127.0.0.1:8000
 ```
 
-## Masaüstü Uygulaması
+## Desktop app
 
-Tarayıcıya gerek yok — `printprep app` web arayüzünü kendi native penceresinde açar (WKWebView/WebView2/GTK WebKit). Sunucu aynı süreçte arka planda çalışır; pencereyi kapatınca her şey kapanır.
+No browser required — `printprep app` opens the web UI inside a native
+window (WKWebView on macOS, WebView2 on Windows, GTK WebKit on Linux). The
+server runs in the background of the same process and shuts down when you
+close the window.
 
 ```bash
-pip install -e ".[web,desktop]"   # pywebview dahil
-printprep app                     # native pencerede aç
+pip install -e ".[web,desktop]"   # includes pywebview
+printprep app                     # opens in a native window
 ```
 
-Çift-tıkla başlatıcılar (tüm platformlar için):
+Double-click launchers (all platforms):
 
-- **macOS:** `PrintPrep.app`'i çift-tıkla (veya Dock'a sürükle / `/Applications` klasörüne kopyala)
-- **Windows:** `PrintPrep.bat`'i çift-tıkla (Masaüstü kısayolu olarak da çalışır)
-- **Linux:** `./install-linux.sh` çalıştır → `~/.local/share/applications/printprep.desktop` kurulur ve uygulama menüsünde **PrintPrep** olarak görünür
+- **macOS:** double-click `PrintPrep.app` (or drag it to the Dock /
+  `/Applications`). First launch prompts you to pick the project folder
+  and remembers your choice.
+- **Windows:** double-click `PrintPrep.bat` (works as a Desktop shortcut
+  too).
+- **Linux:** run `./install-linux.sh` → installs
+  `~/.local/share/applications/printprep.desktop` and shows up as
+  **PrintPrep** in your app menu.
 
-Tümü aynı `printprep app` komutunu çağırır. Pywebview kurulu değilse otomatik olarak `printprep serve` + varsayılan tarayıcıya düşer.
+All of them call the same `printprep app` command. If pywebview isn't
+installed, they fall back to `printprep serve` + your default browser.
 
-Tamamen yerel çalışır — model verisi bilgisayardan çıkmaz. 3D görünümde overhang
-yüzeyleri kırmızı, ince duvarlar amber, delik/açık kenarlar macenta işaretlenir;
-ayrı gövdeler farklı renklere boyanır. Modeli en iyi pozisyona yatırabilir, kendi
-slicer profilini içe aktarabilir ve slicer'a doğrudan yüklenebilir profil (.zip)
-dışa aktarabilirsin.
+Runs entirely locally — your model data never leaves your machine. In the
+3D viewer, overhang surfaces are red, thin walls are amber, holes / open
+edges are magenta, inverted normals show as cyan backfaces, and separate
+bodies are colored differently. You can auto-orient the model, import
+your own slicer profile, and export a slicer-loadable profile (.zip).
 
-Malzeme ön ayarları (sıcaklık, akış) [OrcaSlicer](https://github.com/SoftFever/OrcaSlicer)
-açık kaynak filament kütüphanesinden alınmıştır; geometri analizi modelden hesaplanır.
+Material presets (temperatures, flow) are sourced from the
+[OrcaSlicer](https://github.com/SoftFever/OrcaSlicer) open-source filament
+library — see [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md). Geometry
+analysis is computed from the model itself.
 
-## Geliştirme
+## Development
 
 ```bash
 # Clone
@@ -99,20 +122,31 @@ source venv/bin/activate  # macOS/Linux
 # venv\Scripts\activate   # Windows
 
 # Dependencies
-pip install -e ".[dev]"
+pip install -e ".[dev,web]"
 
-# Test (Python)
+# Tests (Python)
 pytest
 
-# Test (3D viewer geometri yardımcıları, Node 18+)
+# Tests (3D viewer geometry helpers, Node 18+)
 node --test tests/js/geometry-utils.test.mjs
 ```
 
-## Desteklenen Slicers
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the contribution workflow,
+[SECURITY.md](SECURITY.md) for the security policy, and
+[CHANGELOG.md](CHANGELOG.md) for what's new.
+
+## Supported slicers
 
 - Creality Print
 - AnycubicSlicerNext
+- Profile export also covers OrcaSlicer / PrusaSlicer / SuperSlicer formats.
 
-## Lisans
+## Status
 
-MIT License
+Pre-1.0 preview (`0.1.x`). APIs and CLI surface may change. Bug reports and
+PRs are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+[MIT](LICENSE). Third-party attributions live in
+[THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
