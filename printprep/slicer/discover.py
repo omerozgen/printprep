@@ -5,17 +5,40 @@ for `.json` / `.ini` / `.fdm_material` files that look like filament or process
 profiles, and returns a structured list. Used by `printprep slicer-discover`.
 """
 
+import glob as _glob
 import os
 import platform
 from typing import Dict, List
 
 
+def _expand_versioned(paths: List[str]) -> List[str]:
+    """Resolve version subfolders some slicers insert before `user/`.
+
+    Creality Print, for example, stores config under `Creality Print/7.0/user`
+    rather than `Creality Print/user`. For any `.../user` path that doesn't
+    exist literally, glob one level deeper (`.../*/user`) and use what's found.
+    """
+    out = []
+    for p in paths:
+        if os.path.isdir(p):
+            out.append(p)
+            continue
+        if os.path.basename(p) == "user":
+            matches = _glob.glob(os.path.join(os.path.dirname(p), "*", "user"))
+            if matches:
+                out.extend(sorted(matches))
+                continue
+        out.append(p)  # keep literal (harmless if missing)
+    return out
+
+
 def _config_roots() -> Dict[str, List[str]]:
     home = os.path.expanduser("~")
     system = platform.system()
+    roots: Dict[str, List[str]] = {}
     if system == "Darwin":
         appsup = os.path.join(home, "Library", "Application Support")
-        return {
+        roots = {
             "OrcaSlicer": [os.path.join(appsup, "OrcaSlicer", "user")],
             "Creality Print": [
                 os.path.join(appsup, "Creality", "Creality Print", "user"),
@@ -25,25 +48,25 @@ def _config_roots() -> Dict[str, List[str]]:
             "PrusaSlicer": [os.path.join(appsup, "PrusaSlicer")],
             "Cura": [os.path.join(appsup, "cura")],
         }
-    if system == "Linux":
+    elif system == "Linux":
         cfg = os.environ.get("XDG_CONFIG_HOME") or os.path.join(home, ".config")
-        return {
+        roots = {
             "OrcaSlicer": [os.path.join(cfg, "OrcaSlicer", "user")],
             "Creality Print": [os.path.join(cfg, "Creality Print", "user")],
             "AnycubicSlicerNext": [os.path.join(cfg, "AnycubicSlicerNext", "user")],
             "PrusaSlicer": [os.path.join(cfg, "PrusaSlicer")],
             "Cura": [os.path.join(cfg, "cura")],
         }
-    if system == "Windows":
+    elif system == "Windows":
         appdata = os.environ.get("APPDATA") or os.path.join(home, "AppData", "Roaming")
-        return {
+        roots = {
             "OrcaSlicer": [os.path.join(appdata, "OrcaSlicer", "user")],
             "Creality Print": [os.path.join(appdata, "Creality Print", "user")],
             "AnycubicSlicerNext": [os.path.join(appdata, "AnycubicSlicerNext", "user")],
             "PrusaSlicer": [os.path.join(appdata, "PrusaSlicer")],
             "Cura": [os.path.join(appdata, "cura")],
         }
-    return {}
+    return {k: _expand_versioned(v) for k, v in roots.items()}
 
 
 def _classify(rel_dir: str, filename: str):

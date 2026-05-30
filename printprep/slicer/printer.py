@@ -54,12 +54,15 @@ def _first(value, default=None):
 
 
 def _parse_printable_area(area) -> Optional[tuple]:
-    """Derive (x, y) bed size from OrcaSlicer's `printable_area` corner list.
+    """Derive (x, y) bed size from a `printable_area` corner list.
 
-    Format is a list of "X×Y" corner strings, e.g.
-    ["0x0", "420x0", "420x420", "0x420"]. We take the max coordinate on each
-    axis. Returns None if it can't be parsed.
+    Two on-disk formats are seen in the wild:
+      - list (OrcaSlicer / Anycubic): ["0x0", "420x0", "420x420", "0x420"]
+      - comma-separated string (Creality Print): "0x0,220x0,220x220,0x220"
+    We take the span on each axis. Returns None if it can't be parsed.
     """
+    if isinstance(area, str):
+        area = [c for c in area.split(",") if c.strip()]
     if not isinstance(area, (list, tuple)) or not area:
         return None
     xs, ys = [], []

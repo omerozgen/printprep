@@ -59,6 +59,30 @@ def test_parse_non_machine_returns_none():
     assert parse_orca_machine("nonsense") is None
 
 
+def test_printable_area_comma_string():
+    # Creality Print stores printable_area as a comma-separated string, not a list.
+    spec = parse_orca_machine({
+        "type": "machine",
+        "name": "Creality CR-10 SE 0.4 nozzle",
+        "printable_area": "0x0,220x0,220x220,0x220",
+        "printable_height": "265",
+        "nozzle_diameter": ["0.4"],
+        "retraction_length": ["0.5"],
+    })
+    assert spec is not None
+    assert spec.bed_x_mm == 220 and spec.bed_y_mm == 220 and spec.bed_z_mm == 265
+    assert spec.retraction_mm == 0.5
+
+
+def test_max_speed_fallback_from_machine_max_speed_x():
+    spec = parse_orca_machine({
+        "printable_area": ["0x0", "300x0", "300x300", "0x300"],
+        "printable_height": "300",
+        "machine_max_speed_x": ["600", "300", "780"],
+    })
+    assert spec is not None and spec.max_print_speed_mms == 600
+
+
 def test_printable_area_offset_origin():
     # A bed whose corners are offset should still yield correct extents.
     spec = parse_orca_machine({
