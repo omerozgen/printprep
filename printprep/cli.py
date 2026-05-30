@@ -242,7 +242,7 @@ def suggest(path, slicer, material, import_profile, export_fmt, out_dir, printer
     if active_cfg and (active_cfg.get("process") or active_cfg.get("filament")):
         estimate, est_profile = estimate_from_active(
             result, printer=active_cfg["printer"], process=active_cfg["process"],
-            filament=active_cfg["filament"], currency=currency)
+            filament=active_cfg["filament"], currency=currency, price_per_kg=price_per_kg)
         estimate_note = t("msg_estimate_basis", layer=est_profile.layer_height_mm,
                           infill=est_profile.infill_pct, speed=est_profile.print_speed_mms,
                           material=est_profile.material)

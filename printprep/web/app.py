@@ -140,7 +140,7 @@ def api_suggest(model: UploadFile, slicer: str = Form("creality"),
             if acfg and (acfg.get("process") or acfg.get("filament")):
                 estimate, est_profile = estimate_from_active(
                     result, printer=acfg["printer"], process=acfg["process"],
-                    filament=acfg["filament"], currency=currency)
+                    filament=acfg["filament"], currency=currency, price_per_kg=price_per_kg)
                 estimate_basis = {"layer": est_profile.layer_height_mm,
                                   "infill": est_profile.infill_pct,
                                   "speed": est_profile.print_speed_mms,

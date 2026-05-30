@@ -41,7 +41,7 @@ class PrintEstimate:
 
 def estimate_from_active(result: AnalysisResult, printer=None, process=None,
                          filament=None, supports: Optional[bool] = None,
-                         currency: str = ""):
+                         currency: str = "", price_per_kg: Optional[float] = None):
     """Estimate a print job from the user's *real* slicer settings.
 
     `printer`/`process`/`filament` are the dataclasses from
@@ -86,7 +86,9 @@ def estimate_from_active(result: AnalysisResult, printer=None, process=None,
         retraction_mm=material.retraction_mm, retraction_speed_mms=material.retraction_speed_mms,
         nozzle_diameter_mm=nozzle, printer=(printer.name if printer else None),
     )
-    price = filament.cost_per_kg if (filament and filament.cost_per_kg) else None
+    # Manually-entered price wins; the filament profile's cost is only a fallback.
+    price = price_per_kg if (price_per_kg and price_per_kg > 0) else \
+        (filament.cost_per_kg if (filament and filament.cost_per_kg) else None)
     est = estimate_print_job(result, profile, material, price_per_kg=price, currency=currency)
     return est, profile
 
