@@ -87,28 +87,85 @@ def discover_profiles(roots: Dict[str, List[str]] = None) -> List[Dict[str, str]
     return found
 
 
-def discover_printers(roots: Dict[str, List[str]] = None) -> List[Dict]:
-    """Find machine profiles in installed slicers and parse them to PrinterSpec.
+def _read_active_machine_names(base: str) -> set:
+    """Best-effort read of the selected machine preset name(s) from a slicer's
+    `.conf` file (JSON). OrcaSlicer / Creality / Anycubic store the active
+    printer under a "machine" key inside a presets block."""
+    import json
 
-    Returns a list of {slicer, path, spec} where `spec` is a PrinterSpec.
-    Only OrcaSlicer-schema slicers (OrcaSlicer / Creality Print / Anycubic
-    Slicer) are parsed; entries that don't parse are skipped.
+    names = set()
+    try:
+        confs = [f for f in os.listdir(base) if f.endswith(".conf")]
+    except OSError:
+        return names
+    for cf in confs:
+        try:
+            with open(os.path.join(base, cf), encoding="utf-8") as fh:
+                data = json.load(fh)
+        except (OSError, ValueError):
+            continue
+        stack = [data]
+        while stack:
+            node = stack.pop()
+            if isinstance(node, dict):
+                for k, v in node.items():
+                    if k == "machine" and isinstance(v, str) and v and v != "Default Printer":
+                        names.add(v)
+                    else:
+                        stack.append(v)
+            elif isinstance(node, list):
+                stack.extend(node)
+    return names
+
+
+def discover_printers(roots: Dict[str, List[str]] = None) -> List[Dict]:
+    """Find the user's printer(s) in installed slicers and parse to PrinterSpec.
+
+    Strategy (OrcaSlicer / Creality Print / Anycubic Slicer share one schema):
+      - All *custom* machine profiles in `user/**/machine/`.
+      - Plus the *active* machine (read from the slicer's .conf), resolved even
+        when it's a built-in profile under `system/**/machine/` — this is the
+        common case, since most people just pick a bundled printer model.
+
+    Returns [{slicer, path, spec, active}], active printers sorted first.
     """
-    # Imported lazily so `discover_profiles` has no hard dependency on printer.py.
     from printprep.slicer.printer import parse_machine_file
+
+    if roots is None:
+        roots = _config_roots()
 
     printers: List[Dict] = []
     seen = set()
-    for row in discover_profiles(roots):
-        if row["kind"] != "machine":
-            continue
-        spec = parse_machine_file(row["path"])
-        if spec is None:
-            continue
-        key = (spec.name, spec.bed_x_mm, spec.bed_y_mm)
-        if key in seen:
-            continue
-        seen.add(key)
-        printers.append({"slicer": row["slicer"], "path": row["path"], "spec": spec})
-    printers.sort(key=lambda r: (r["slicer"], r["spec"].name.lower()))
+    for slicer, paths in roots.items():
+        bases = {os.path.dirname(p) if os.path.basename(p) == "user" else p for p in paths}
+        for base in bases:
+            if not os.path.isdir(base):
+                continue
+            active = _read_active_machine_names(base)
+            # Collect machine JSONs from user (custom), system + ota (built-in).
+            for sub in ("user", "system", "ota"):
+                sub_root = os.path.join(base, sub)
+                if not os.path.isdir(sub_root):
+                    continue
+                for root, _, files in os.walk(sub_root):
+                    if os.path.basename(root).lower() != "machine":
+                        continue
+                    for fname in files:
+                        if not fname.lower().endswith(".json"):
+                            continue
+                        stem = os.path.splitext(fname)[0]
+                        is_active = stem in active
+                        # Include user customs always; built-ins only if active.
+                        if sub != "user" and not is_active:
+                            continue
+                        spec = parse_machine_file(os.path.join(root, fname))
+                        if spec is None:  # common base files have no bed -> skipped
+                            continue
+                        key = (spec.name, spec.bed_x_mm, spec.bed_y_mm)
+                        if key in seen:
+                            continue
+                        seen.add(key)
+                        printers.append({"slicer": slicer, "path": os.path.join(root, fname),
+                                         "spec": spec, "active": is_active})
+    printers.sort(key=lambda r: (not r["active"], r["slicer"], r["spec"].name.lower()))
     return printers

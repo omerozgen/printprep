@@ -113,13 +113,24 @@ def parse_orca_machine(data: dict) -> Optional[PrinterSpec]:
     name = (data.get("name") or data.get("printer_settings_id")
             or data.get("printer_model") or "Unknown printer")
 
+    # max_print_speed isn't always present; fall back to the X-axis mechanical
+    # max (machine_max_speed_x is a list whose first value is the top speed).
+    max_speed = _opt_int("max_print_speed")
+    if max_speed is None:
+        try:
+            mx = data.get("machine_max_speed_x")
+            if isinstance(mx, (list, tuple)) and mx:
+                max_speed = int(round(float(mx[0])))
+        except (ValueError, TypeError):
+            max_speed = None
+
     return PrinterSpec(
         name=str(name),
         bed_x_mm=round(bed_x, 1),
         bed_y_mm=round(bed_y, 1),
         bed_z_mm=round(bed_z, 1),
         nozzle_diameter_mm=nozzle,
-        max_print_speed_mms=_opt_int("max_print_speed"),
+        max_print_speed_mms=max_speed,
         max_volumetric_speed_mm3s=_opt_float("max_volumetric_extrusion_rate")
                                   or _opt_float("filament_max_volumetric_speed"),
         retraction_mm=_opt_float("retraction_length"),
