@@ -151,5 +151,6 @@
   "prop_cost": "Kosten",
   "label_printer": "Drucker",
   "printer_none": "Generisch / nicht angegeben",
-  "printer_detected": "(erkannt)"
+  "printer_detected": "(erkannt)",
+  "estimate_basis_note": "Basierend auf den aktiven Einstellungen deines Slicers: {layer}mm Schicht, {infill}% Infill, {speed}mm/s, {material}."
 }

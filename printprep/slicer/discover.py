@@ -192,3 +192,145 @@ def discover_printers(roots: Dict[str, List[str]] = None) -> List[Dict]:
                                          "spec": spec, "active": is_active})
     printers.sort(key=lambda r: (not r["active"], r["slicer"], r["spec"].name.lower()))
     return printers
+
+
+def _read_active_presets(base: str) -> Dict[str, str]:
+    """Read the *currently selected* machine/process/filament preset names from
+    a slicer's `.conf`. Prefers an explicit "presets" block; otherwise falls
+    back to the first machine/process/filament string values seen."""
+    import json
+
+    chosen: Dict[str, str] = {}
+    first: Dict[str, str] = {}
+    try:
+        confs = [f for f in os.listdir(base) if f.endswith(".conf")]
+    except OSError:
+        return chosen
+    for cf in confs:
+        try:
+            with open(os.path.join(base, cf), encoding="utf-8") as fh:
+                data = json.load(fh)
+        except (OSError, ValueError):
+            continue
+        presets = data.get("presets") if isinstance(data, dict) else None
+        if isinstance(presets, dict):
+            for kind in ("machine", "process", "filament"):
+                v = presets.get(kind)
+                if isinstance(v, str) and v and v != "Default Printer":
+                    chosen.setdefault(kind, v)
+        stack = [data]
+        while stack:
+            node = stack.pop()
+            if isinstance(node, dict):
+                for k, v in node.items():
+                    if k in ("machine", "process", "filament") and isinstance(v, str) \
+                            and v and v != "Default Printer":
+                        first.setdefault(k, v)
+                    else:
+                        stack.append(v)
+            elif isinstance(node, list):
+                stack.extend(node)
+    for kind in ("machine", "process", "filament"):
+        chosen.setdefault(kind, first.get(kind))
+    return {k: v for k, v in chosen.items() if v}
+
+
+def _index_profiles(base: str) -> Dict[str, Dict[str, str]]:
+    """Index every profile JSON under base by kind -> {stem: path}, preferring
+    user/ over system/ over ota/ (so customs win over built-ins)."""
+    index: Dict[str, Dict[str, str]] = {"machine": {}, "process": {}, "filament": {}}
+    for sub in ("ota", "system", "user"):  # later wins -> user overrides
+        sub_root = os.path.join(base, sub)
+        if not os.path.isdir(sub_root):
+            continue
+        for root, _, files in os.walk(sub_root):
+            kind = os.path.basename(root).lower()
+            if kind not in index:
+                continue
+            for fname in files:
+                if fname.lower().endswith(".json"):
+                    index[kind][os.path.splitext(fname)[0]] = os.path.join(root, fname)
+    return index
+
+
+def _load_with_inherits(path: str, kind_index: Dict[str, str], _depth: int = 0) -> dict:
+    """Load a profile JSON, merging its `inherits` parent chain (child wins)."""
+    import json
+
+    try:
+        with open(path, encoding="utf-8") as fh:
+            data = json.load(fh)
+    except (OSError, ValueError):
+        return {}
+    if not isinstance(data, dict):
+        return {}
+    parent_name = data.get("inherits")
+    if parent_name and _depth < 12 and parent_name in kind_index:
+        parent = _load_with_inherits(kind_index[parent_name], kind_index, _depth + 1)
+        merged = dict(parent)
+        merged.update(data)
+        return merged
+    return data
+
+
+def detect_active_config(roots: Dict[str, List[str]] = None) -> List[Dict]:
+    """Resolve the user's *currently selected* printer + process + filament for
+    each installed slicer, with inherits chains merged.
+
+    Returns [{slicer, printer, process, filament}] where each value is the
+    parsed dataclass (or None). Slicers with no detectable active config are
+    skipped.
+    """
+    from printprep.slicer.printer import parse_orca_machine
+    from printprep.slicer.settings import parse_filament, parse_process
+
+    if roots is None:
+        roots = _config_roots()
+
+    out: List[Dict] = []
+    for slicer, paths in roots.items():
+        bases = {os.path.dirname(p) if os.path.basename(p) == "user" else p for p in paths}
+        for base in bases:
+            if not os.path.isdir(base):
+                continue
+            presets = _read_active_presets(base)
+            if not presets:
+                continue
+            index = _index_profiles(base)
+            cfg = {"slicer": slicer, "printer": None, "process": None, "filament": None}
+
+            machine_data = {}
+            mname = presets.get("machine")
+            if mname and mname in index["machine"]:
+                machine_data = _load_with_inherits(index["machine"][mname], index["machine"])
+                cfg["printer"] = parse_orca_machine(machine_data)
+
+            def _resolve(preset_name, kind, machine_default):
+                # A real custom selection wins; "Default Setting/Filament" and
+                # unresolved names fall back to the printer's declared default.
+                if (preset_name and not str(preset_name).lower().startswith("default")
+                        and preset_name in index[kind]):
+                    return preset_name
+                md = machine_default[0] if isinstance(machine_default, (list, tuple)) \
+                    and machine_default else machine_default
+                if isinstance(md, str) and md in index[kind]:
+                    return md
+                if preset_name and preset_name in index[kind]:
+                    return preset_name
+                return None
+
+            pname = _resolve(presets.get("process"), "process",
+                             machine_data.get("default_print_profile"))
+            if pname:
+                cfg["process"] = parse_process(
+                    _load_with_inherits(index["process"][pname], index["process"]))
+
+            fname = _resolve(presets.get("filament"), "filament",
+                             machine_data.get("default_filament_profile"))
+            if fname:
+                cfg["filament"] = parse_filament(
+                    _load_with_inherits(index["filament"][fname], index["filament"]))
+
+            if cfg["printer"] or cfg["process"] or cfg["filament"]:
+                out.append(cfg)
+    return out

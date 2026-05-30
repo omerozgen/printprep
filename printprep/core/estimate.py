@@ -39,6 +39,58 @@ class PrintEstimate:
     top_bottom_volume_mm3: float = 0.0
 
 
+def estimate_from_active(result: AnalysisResult, printer=None, process=None,
+                         filament=None, supports: Optional[bool] = None,
+                         currency: str = ""):
+    """Estimate a print job from the user's *real* slicer settings.
+
+    `printer`/`process`/`filament` are the dataclasses from
+    discover.detect_active_config(); any may be None (gaps fall back to sane
+    defaults). Cost is auto-filled from the filament's cost-per-kg when known.
+
+    Returns (PrintEstimate, SlicerProfile) — the profile reflects the actual
+    settings used, so callers can show them.
+    """
+    from printprep.config.presets import MaterialPreset, get_material
+
+    base = get_material("pla")
+    density = filament.density_g_cm3 if (filament and filament.density_g_cm3) else base.density_g_cm3
+    max_vol = (filament.max_volumetric_speed_mm3s
+               if (filament and filament.max_volumetric_speed_mm3s) else base.max_volumetric_speed_mm3s)
+    material = MaterialPreset(
+        name=(filament.name if filament else "filament"),
+        nozzle_temp_c=(filament.nozzle_temp_c if (filament and filament.nozzle_temp_c) else base.nozzle_temp_c),
+        bed_temp_c=(filament.bed_temp_c if (filament and filament.bed_temp_c) else base.bed_temp_c),
+        max_volumetric_speed_mm3s=max_vol,
+        retraction_mm=(printer.retraction_mm if (printer and printer.retraction_mm is not None) else base.retraction_mm),
+        retraction_speed_mms=(printer.retraction_speed_mms if (printer and printer.retraction_speed_mms is not None) else base.retraction_speed_mms),
+        density_g_cm3=density,
+    )
+
+    nozzle = printer.nozzle_diameter_mm if printer else defaults.NOZZLE_DIAMETER_MM
+    layer = process.layer_height_mm if (process and process.layer_height_mm) else defaults.DEFAULT_LAYER_HEIGHT_MM
+    infill = process.infill_pct if (process and process.infill_pct is not None) else defaults.DEFAULT_INFILL_PCT
+    walls = process.wall_count if (process and process.wall_count) else defaults.DEFAULT_WALL_COUNT
+    speed = process.print_speed_mms if (process and process.print_speed_mms) else None
+    if speed is None:
+        speed = printer.max_print_speed_mms if (printer and printer.max_print_speed_mms) else 60
+    if supports is None:
+        supports = result.overhang_face_count > 0
+
+    profile = SlicerProfile(
+        slicer="active", material=material.name, layer_height_mm=layer,
+        infill_pct=infill, wall_count=walls, supports=supports,
+        support_style="normal" if supports else "none", brim=False,
+        nozzle_temp_c=material.nozzle_temp_c, bed_temp_c=material.bed_temp_c,
+        print_speed_mms=speed, max_volumetric_speed_mm3s=material.max_volumetric_speed_mm3s,
+        retraction_mm=material.retraction_mm, retraction_speed_mms=material.retraction_speed_mms,
+        nozzle_diameter_mm=nozzle, printer=(printer.name if printer else None),
+    )
+    price = filament.cost_per_kg if (filament and filament.cost_per_kg) else None
+    est = estimate_print_job(result, profile, material, price_per_kg=price, currency=currency)
+    return est, profile
+
+
 def estimate_print_job(result: AnalysisResult, profile: SlicerProfile,
                        material: MaterialPreset,
                        price_per_kg: Optional[float] = None,

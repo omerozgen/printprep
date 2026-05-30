@@ -69,5 +69,8 @@
   "msg_printer_used": "使用打印机: {name} ({src})。",
   "msg_printers_detected": "从已安装的切片机检测到 {n} 台打印机。",
   "msg_printer_usage": "使用 'printprep suggest --printer \"<名称>\"' 或 '--auto-printer' 定制配置。",
-  "err_printer_profile_failed": "无法读取打印机配置: {path}"
+  "err_printer_profile_failed": "无法读取打印机配置: {path}",
+  "msg_estimate_basis": "估算基于您切片机的当前设置: {layer}mm 层高, {infill}% 填充, {speed}mm/s, {material}。",
+  "minute_short_cli": "分",
+  "hour_short_cli": "时"
 }

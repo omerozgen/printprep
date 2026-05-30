@@ -151,5 +151,6 @@
   "prop_cost": "التكلفة",
   "label_printer": "الطابعة",
   "printer_none": "عامة / غير محددة",
-  "printer_detected": "(مكتشفة)"
+  "printer_detected": "(مكتشفة)",
+  "estimate_basis_note": "بناءً على الإعدادات النشطة للشريحة: طبقة {layer}مم، حشو {infill}%، {speed}مم/ث، {material}."
 }

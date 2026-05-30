@@ -69,5 +69,8 @@
   "msg_printer_used": "사용 프린터: {name} ({src}).",
   "msg_printers_detected": "설치된 슬라이서에서 {n}대의 프린터 감지됨.",
   "msg_printer_usage": "프로필을 맞추려면 'printprep suggest --printer \"<이름>\"' 또는 '--auto-printer' 사용.",
-  "err_printer_profile_failed": "프린터 프로필을 읽을 수 없음: {path}"
+  "err_printer_profile_failed": "프린터 프로필을 읽을 수 없음: {path}",
+  "msg_estimate_basis": "슬라이서의 활성 설정 기반 추정: 레이어 {layer}mm, 인필 {infill}%, {speed}mm/s, {material}.",
+  "minute_short_cli": "분",
+  "hour_short_cli": "시간"
 }

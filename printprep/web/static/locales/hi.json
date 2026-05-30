@@ -151,5 +151,6 @@
   "prop_cost": "लागत",
   "label_printer": "प्रिंटर",
   "printer_none": "सामान्य / अनिर्दिष्ट",
-  "printer_detected": "(पहचाना गया)"
+  "printer_detected": "(पहचाना गया)",
+  "estimate_basis_note": "आपके स्लाइसर की सक्रिय सेटिंग्स पर आधारित: {layer}मिमी परत, {infill}% इनफिल, {speed}मिमी/से, {material}।"
 }

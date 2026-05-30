@@ -69,5 +69,8 @@
   "msg_printer_used": "Kullanılan yazıcı: {name} ({src}).",
   "msg_printers_detected": "Kurulu slicer'lardan {n} yazıcı algılandı.",
   "msg_printer_usage": "Profili özelleştirmek için 'printprep suggest --printer \"<ad>\"' veya '--auto-printer' kullan.",
-  "err_printer_profile_failed": "Yazıcı profili okunamadı: {path}"
+  "err_printer_profile_failed": "Yazıcı profili okunamadı: {path}",
+  "msg_estimate_basis": "Tahmin slicer'ının aktif ayarlarına göre: {layer}mm katman, %{infill} infill, {speed}mm/s, {material}.",
+  "minute_short_cli": "dk",
+  "hour_short_cli": "sa"
 }

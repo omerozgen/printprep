@@ -8,6 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Estimates from your real slicer settings.** With `--auto-printer` (CLI) or a
+  detected printer selected (web), the filament weight / print time / cost
+  estimate is now computed from your slicer's *active* process + filament
+  profile instead of PrintPrep's generic defaults:
+  - reads layer height, infill %, wall count and print speed from the active
+    process profile;
+  - reads filament density and cost-per-kg from the active filament profile
+    (resolving the `inherits` chain) — cost is filled in automatically, no need
+    to type a price;
+  - falls back to the printer's declared default process/filament when no
+    custom profile is active;
+  - handles Creality's comma-string `printable_area` and version subfolders
+    (`Creality Print/7.0/user`).
+
+### Added (printer detection, continued)
 - **Printer-aware suggestions.** PrintPrep can now read your printer's real
   specs instead of assuming a 0.4mm nozzle / 420×420 bed:
   - Auto-detects machine profiles from your installed slicer (OrcaSlicer /

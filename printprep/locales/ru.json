@@ -69,5 +69,8 @@
   "msg_printer_used": "Используется принтер: {name} ({src}).",
   "msg_printers_detected": "Обнаружено принтеров из установленных слайсеров: {n}.",
   "msg_printer_usage": "Используйте 'printprep suggest --printer \"<имя>\"' или '--auto-printer' для настройки.",
-  "err_printer_profile_failed": "Не удалось прочитать профиль принтера: {path}"
+  "err_printer_profile_failed": "Не удалось прочитать профиль принтера: {path}",
+  "msg_estimate_basis": "Оценка на основе активных настроек слайсера: слой {layer}mm, заполнение {infill}%, {speed}mm/s, {material}.",
+  "minute_short_cli": "мин",
+  "hour_short_cli": "ч"
 }

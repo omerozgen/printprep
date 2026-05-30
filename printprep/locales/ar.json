@@ -69,5 +69,8 @@
   "msg_printer_used": "الطابعة المستخدمة: {name} ({src}).",
   "msg_printers_detected": "تم اكتشاف {n} طابعة من الشرائح المثبتة.",
   "msg_printer_usage": "استخدم 'printprep suggest --printer \"<الاسم>\"' أو '--auto-printer' لتخصيص الملف.",
-  "err_printer_profile_failed": "تعذّرت قراءة ملف تعريف الطابعة: {path}"
+  "err_printer_profile_failed": "تعذّرت قراءة ملف تعريف الطابعة: {path}",
+  "msg_estimate_basis": "التقدير مبني على الإعدادات النشطة في الشريحة: طبقة {layer}مم، حشو {infill}%، {speed}مم/ث، {material}.",
+  "minute_short_cli": "د",
+  "hour_short_cli": "س"
 }

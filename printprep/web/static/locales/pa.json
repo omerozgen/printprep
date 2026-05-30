@@ -151,5 +151,6 @@
   "prop_cost": "ਲਾਗਤ",
   "label_printer": "ਪ੍ਰਿੰਟਰ",
   "printer_none": "ਆਮ / ਅਣ-ਦੱਸਿਆ",
-  "printer_detected": "(ਪਛਾਣਿਆ)"
+  "printer_detected": "(ਪਛਾਣਿਆ)",
+  "estimate_basis_note": "ਤੁਹਾਡੇ ਸਲਾਈਸਰ ਦੀਆਂ ਸਰਗਰਮ ਸੈਟਿੰਗਾਂ 'ਤੇ ਆਧਾਰਿਤ: {layer}ਮਿਮੀ ਪਰਤ, {infill}% ਇਨਫਿਲ, {speed}ਮਿਮੀ/ਸ, {material}।"
 }

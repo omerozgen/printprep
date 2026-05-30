@@ -62,6 +62,7 @@ const els = {
   profileOutput: document.getElementById("profile-output"),
   estimateBlock: document.getElementById("estimate-block"),
   estimateGrid: document.getElementById("estimate-grid"),
+  estimateBasis: document.getElementById("estimate-basis"),
   priceInput: document.getElementById("price-input"),
   currencyInput: document.getElementById("currency-input"),
   exportFormat: document.getElementById("export-format"),
@@ -556,6 +557,15 @@ function renderProfile(payload) {
       rows.push(prop(t("prop_cost") || "Cost", `${estimate.cost.toFixed(2)}${cur}`));
     }
     els.estimateGrid.innerHTML = rows.join("");
+    const basis = payload && payload.estimate_basis;
+    if (basis) {
+      els.estimateBasis.textContent = t("estimate_basis_note", {
+        layer: basis.layer, infill: basis.infill, speed: basis.speed, material: basis.material,
+      });
+      els.estimateBasis.hidden = false;
+    } else {
+      els.estimateBasis.hidden = true;
+    }
     els.estimateBlock.hidden = false;
   } else {
     els.estimateBlock.hidden = true;

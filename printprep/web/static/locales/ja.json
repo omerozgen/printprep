@@ -151,5 +151,6 @@
   "prop_cost": "費用",
   "label_printer": "プリンター",
   "printer_none": "汎用 / 未指定",
-  "printer_detected": "(検出済)"
+  "printer_detected": "(検出済)",
+  "estimate_basis_note": "スライサーの現在の設定に基づく: 層 {layer}mm, インフィル {infill}%, {speed}mm/s, {material}。"
 }

@@ -124,3 +124,55 @@ def test_suggestion_uses_printer_nozzle_and_retraction():
 def get_material_pla():
     from printprep.config.presets import get_material
     return get_material("pla")
+
+
+# ---- process / filament settings + estimate-from-active ----
+
+from printprep.slicer.settings import parse_filament, parse_process  # noqa: E402
+from printprep.core import estimate_from_active  # noqa: E402
+
+
+def test_parse_process_orca():
+    ps = parse_process({
+        "name": "0.20mm Standard",
+        "layer_height": "0.2",
+        "sparse_infill_density": "15%",
+        "wall_loops": "3",
+        "inner_wall_speed": "200", "outer_wall_speed": "120", "sparse_infill_speed": "250",
+    })
+    assert ps is not None
+    assert ps.layer_height_mm == 0.2
+    assert ps.infill_pct == 15
+    assert ps.wall_count == 3
+    assert ps.print_speed_mms == 200  # median of 120/200/250
+
+
+def test_parse_filament_orca():
+    fl = parse_filament({
+        "name": "Generic PLA",
+        "filament_density": ["1.24"],
+        "filament_cost": ["20"],
+        "filament_max_volumetric_speed": ["12"],
+        "nozzle_temperature": ["210"],
+    })
+    assert fl is not None
+    assert fl.density_g_cm3 == 1.24
+    assert fl.cost_per_kg == 20
+    assert fl.max_volumetric_speed_mm3s == 12
+
+
+def test_estimate_from_active_uses_real_settings_and_cost():
+    result = analyze(_cube(50.0))
+    printer = PrinterSpec("P", bed_x_mm=300, bed_y_mm=300, bed_z_mm=300, nozzle_diameter_mm=0.4)
+    process = parse_process({"name": "fine", "layer_height": "0.1",
+                             "sparse_infill_density": "100%", "wall_loops": "4",
+                             "inner_wall_speed": "13"})
+    filament = parse_filament({"name": "PETG", "filament_density": ["1.27"],
+                               "filament_cost": ["25"], "filament_max_volumetric_speed": ["10"]})
+    est, prof = estimate_from_active(result, printer=printer, process=process, filament=filament)
+    assert prof.layer_height_mm == 0.1
+    assert prof.infill_pct == 100
+    assert prof.wall_count == 4
+    assert prof.print_speed_mms == 13
+    # cost auto-derived from filament cost-per-kg (no manual price needed)
+    assert est.cost is not None and est.cost > 0

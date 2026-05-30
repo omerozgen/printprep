@@ -14,8 +14,8 @@ from rich.table import Table
 from printprep import PrintPrepError, __version__
 from printprep.config.presets import MATERIAL_PRESETS
 from printprep.core import (
-    analyze, estimate_print_job, load_mesh, merge_to_single, pack as pack_layout,
-    repair_mesh, suggest_orientation,
+    analyze, estimate_from_active, estimate_print_job, load_mesh, merge_to_single,
+    pack as pack_layout, repair_mesh, suggest_orientation,
 )
 from printprep.config.presets import get_material
 from printprep.i18n import t
@@ -227,9 +227,28 @@ def suggest(path, slicer, material, import_profile, export_fmt, out_dir, printer
         if warn:
             console.print(f"[bold yellow]⚠ {warn['text']}[/bold yellow]")
 
-    # Estimate filament use, weight and print time from the chosen profile.
-    estimate = estimate_print_job(result, profile, preset,
-                                  price_per_kg=price_per_kg, currency=currency)
+    # Estimate: with --auto-printer, base it on the user's REAL active slicer
+    # settings (layer height, infill, speed, filament density + cost); otherwise
+    # estimate the recommended profile.
+    active_cfg = None
+    if auto_printer:
+        from printprep.slicer.discover import detect_active_config
+        cfgs = [c for c in detect_active_config() if c.get("printer")]
+        if printer_spec:
+            active_cfg = next((c for c in cfgs if c["printer"].name == printer_spec.name), None)
+        active_cfg = active_cfg or (cfgs[0] if cfgs else None)
+
+    estimate_note = None
+    if active_cfg and (active_cfg.get("process") or active_cfg.get("filament")):
+        estimate, est_profile = estimate_from_active(
+            result, printer=active_cfg["printer"], process=active_cfg["process"],
+            filament=active_cfg["filament"], currency=currency)
+        estimate_note = t("msg_estimate_basis", layer=est_profile.layer_height_mm,
+                          infill=est_profile.infill_pct, speed=est_profile.print_speed_mms,
+                          material=est_profile.material)
+    else:
+        estimate = estimate_print_job(result, profile, preset,
+                                      price_per_kg=price_per_kg, currency=currency)
 
     # An explicit --printer string wins for export binding; otherwise use the
     # resolved spec's name so the preset binds to the right printer.
@@ -262,6 +281,8 @@ def suggest(path, slicer, material, import_profile, export_fmt, out_dir, printer
         f"  Time            : ~{_fmt_minutes(estimate.print_time_min)}\n"
         + cost_line
     )
+    if estimate_note:
+        console.print(f"[dim]{estimate_note}[/dim]")
 
 
 @main.command(help=t("cmd_orient_help"))

@@ -151,5 +151,6 @@
   "prop_cost": "খরচ",
   "label_printer": "প্রিন্টার",
   "printer_none": "সাধারণ / অনির্দিষ্ট",
-  "printer_detected": "(শনাক্ত)"
+  "printer_detected": "(শনাক্ত)",
+  "estimate_basis_note": "আপনার স্লাইসারের সক্রিয় সেটিংসের ভিত্তিতে: {layer}মিমি স্তর, {infill}% ইনফিল, {speed}মিমি/সe, {material}।"
 }

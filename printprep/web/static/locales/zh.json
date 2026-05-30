@@ -151,5 +151,6 @@
   "prop_cost": "费用",
   "label_printer": "打印机",
   "printer_none": "通用 / 未指定",
-  "printer_detected": "(已检测)"
+  "printer_detected": "(已检测)",
+  "estimate_basis_note": "基于您切片机的当前设置: {layer}mm 层高, {infill}% 填充, {speed}mm/s, {material}。"
 }

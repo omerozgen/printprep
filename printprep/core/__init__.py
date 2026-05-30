@@ -1,5 +1,5 @@
 from printprep.core.analyzer import AnalysisResult, analyze
-from printprep.core.estimate import PrintEstimate, estimate_print_job
+from printprep.core.estimate import PrintEstimate, estimate_from_active, estimate_print_job
 from printprep.core.mesh import load_mesh, ray_available
 from printprep.core.merge import MergeReport, merge_to_single
 from printprep.core.orient import OrientationResult, suggest_orientation
@@ -11,6 +11,7 @@ __all__ = [
     "analyze",
     "PrintEstimate",
     "estimate_print_job",
+    "estimate_from_active",
     "load_mesh",
     "ray_available",
     "MergeReport",

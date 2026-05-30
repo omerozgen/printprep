@@ -151,5 +151,6 @@
   "prop_cost": "비용",
   "label_printer": "프린터",
   "printer_none": "일반 / 미지정",
-  "printer_detected": "(감지됨)"
+  "printer_detected": "(감지됨)",
+  "estimate_basis_note": "슬라이서의 활성 설정 기반: 레이어 {layer}mm, 인필 {infill}%, {speed}mm/s, {material}."
 }

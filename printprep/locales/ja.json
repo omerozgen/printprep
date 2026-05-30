@@ -69,5 +69,8 @@
   "msg_printer_used": "使用プリンター: {name} ({src})。",
   "msg_printers_detected": "インストール済みスライサーから {n} 台のプリンターを検出。",
   "msg_printer_usage": "プロファイル調整には 'printprep suggest --printer \"<名前>\"' または '--auto-printer' を使用。",
-  "err_printer_profile_failed": "プリンタープロファイルを読み込めません: {path}"
+  "err_printer_profile_failed": "プリンタープロファイルを読み込めません: {path}",
+  "msg_estimate_basis": "スライサーの現在の設定に基づく見積もり: 層 {layer}mm, インフィル {infill}%, {speed}mm/s, {material}。",
+  "minute_short_cli": "分",
+  "hour_short_cli": "時間"
 }

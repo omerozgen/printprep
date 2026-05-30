@@ -69,5 +69,8 @@
   "msg_printer_used": "प्रयुक्त प्रिंटर: {name} ({src})।",
   "msg_printers_detected": "स्थापित स्लाइसरों से {n} प्रिंटर पहचाने गए।",
   "msg_printer_usage": "प्रोफाइल अनुकूलित करने हेतु 'printprep suggest --printer \"<नाम>\"' या '--auto-printer' का उपयोग करें।",
-  "err_printer_profile_failed": "प्रिंटर प्रोफाइल नहीं पढ़ सका: {path}"
+  "err_printer_profile_failed": "प्रिंटर प्रोफाइल नहीं पढ़ सका: {path}",
+  "msg_estimate_basis": "अनुमान आपके स्लाइसर की सक्रिय सेटिंग्स पर आधारित: {layer}मिमी परत, {infill}% इनफिल, {speed}मिमी/से, {material}।",
+  "minute_short_cli": "मिन",
+  "hour_short_cli": "घं"
 }

@@ -151,5 +151,6 @@
   "prop_cost": "Custo",
   "label_printer": "Impressora",
   "printer_none": "Genérica / não especificada",
-  "printer_detected": "(detectada)"
+  "printer_detected": "(detectada)",
+  "estimate_basis_note": "Com base nas configurações ativas do seu slicer: camada {layer}mm, preenchimento {infill}%, {speed}mm/s, {material}."
 }

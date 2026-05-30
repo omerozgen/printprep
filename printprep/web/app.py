@@ -20,7 +20,8 @@ from fastapi.staticfiles import StaticFiles
 from printprep import PrintPrepError, __version__
 from printprep.config.presets import MATERIAL_PRESETS
 from printprep.core import (
-    analyze, estimate_print_job, load_mesh, merge_to_single, repair_mesh, suggest_orientation,
+    analyze, estimate_from_active, estimate_print_job, load_mesh, merge_to_single,
+    repair_mesh, suggest_orientation,
 )
 from printprep.config.presets import get_material
 from printprep.slicer import (
@@ -128,8 +129,25 @@ def api_suggest(model: UploadFile, slicer: str = Form("creality"),
         else:
             preset = get_material(material)
             built = generator.build_profile_from_preset(result, preset, printer_spec)
-        estimate = estimate_print_job(result, built, preset,
-                                      price_per_kg=price_per_kg, currency=currency)
+        # If the selected printer was auto-detected from a slicer, base the
+        # estimate on the user's REAL active settings (layer/infill/speed/
+        # density/cost) instead of the recommended profile.
+        estimate_basis = None
+        if printer_spec is not None and getattr(printer_spec, "source", "") == "slicer":
+            from printprep.slicer.discover import detect_active_config
+            cfgs = [c for c in detect_active_config() if c.get("printer")]
+            acfg = next((c for c in cfgs if c["printer"].name == printer_spec.name), None)
+            if acfg and (acfg.get("process") or acfg.get("filament")):
+                estimate, est_profile = estimate_from_active(
+                    result, printer=acfg["printer"], process=acfg["process"],
+                    filament=acfg["filament"], currency=currency)
+                estimate_basis = {"layer": est_profile.layer_height_mm,
+                                  "infill": est_profile.infill_pct,
+                                  "speed": est_profile.print_speed_mms,
+                                  "material": est_profile.material}
+        if estimate_basis is None:
+            estimate = estimate_print_job(result, built, preset,
+                                          price_per_kg=price_per_kg, currency=currency)
         warn = bed_fit_warning(result, printer_spec)
     except PrintPrepError as exc:
         return JSONResponse(status_code=400, content={"error": str(exc)})
@@ -137,7 +155,8 @@ def api_suggest(model: UploadFile, slicer: str = Form("creality"),
         return JSONResponse(status_code=400, content={"error": str(exc).strip('"')})
     return {"profile": asdict(built), "estimate": asdict(estimate),
             "printer": (printer_spec.name if printer_spec else None),
-            "bed_fit_warning": (warn["text"] if warn else None)}
+            "bed_fit_warning": (warn["text"] if warn else None),
+            "estimate_basis": estimate_basis}
 
 
 @app.post("/api/export")

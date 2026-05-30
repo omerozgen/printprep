@@ -151,5 +151,6 @@
   "prop_cost": "Biaya",
   "label_printer": "Printer",
   "printer_none": "Umum / ora kasebut",
-  "printer_detected": "(kadeteksi)"
+  "printer_detected": "(kadeteksi)",
+  "estimate_basis_note": "Adhedhasar setelan aktif slicer panjenengan: lapisan {layer}mm, infill {infill}%, {speed}mm/s, {material}."
 }

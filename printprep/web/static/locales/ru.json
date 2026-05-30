@@ -151,5 +151,6 @@
   "prop_cost": "Стоимость",
   "label_printer": "Принтер",
   "printer_none": "Общий / не указан",
-  "printer_detected": "(обнаружен)"
+  "printer_detected": "(обнаружен)",
+  "estimate_basis_note": "На основе активных настроек слайсера: слой {layer}mm, заполнение {infill}%, {speed}mm/s, {material}."
 }

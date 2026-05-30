@@ -151,5 +151,6 @@
   "prop_cost": "Maliyet",
   "label_printer": "Yazıcı",
   "printer_none": "Genel / belirtilmemiş",
-  "printer_detected": "(algılandı)"
+  "printer_detected": "(algılandı)",
+  "estimate_basis_note": "Slicer'ının aktif ayarlarına göre: {layer}mm katman, %{infill} infill, {speed}mm/s, {material}."
 }

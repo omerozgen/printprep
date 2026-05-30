@@ -69,5 +69,8 @@
   "msg_printer_used": "Imprimante utilisée : {name} ({src}).",
   "msg_printers_detected": "{n} imprimante(s) détectée(s) depuis les slicers installés.",
   "msg_printer_usage": "Utilisez 'printprep suggest --printer \"<nom>\"' ou '--auto-printer' pour adapter le profil.",
-  "err_printer_profile_failed": "Impossible de lire le profil d'imprimante : {path}"
+  "err_printer_profile_failed": "Impossible de lire le profil d'imprimante : {path}",
+  "msg_estimate_basis": "Estimation basée sur les réglages actifs de votre slicer : couche {layer}mm, remplissage {infill}%, {speed}mm/s, {material}.",
+  "minute_short_cli": "min",
+  "hour_short_cli": "h"
 }

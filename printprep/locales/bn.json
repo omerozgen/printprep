@@ -69,5 +69,8 @@
   "msg_printer_used": "ব্যবহৃত প্রিন্টার: {name} ({src})।",
   "msg_printers_detected": "ইনস্টল করা স্লাইসার থেকে {n}টি প্রিন্টার শনাক্ত হয়েছে।",
   "msg_printer_usage": "প্রোফাইল মানানসই করতে 'printprep suggest --printer \"<নাম>\"' বা '--auto-printer' ব্যবহার করুন।",
-  "err_printer_profile_failed": "প্রিন্টার প্রোফাইল পড়া যায়নি: {path}"
+  "err_printer_profile_failed": "প্রিন্টার প্রোফাইল পড়া যায়নি: {path}",
+  "msg_estimate_basis": "অনুমান আপনার স্লাইসারের সক্রিয় সেটিংসের উপর ভিত্তি করে: {layer}মিমি স্তর, {infill}% ইনফিল, {speed}মিমি/সe, {material}।",
+  "minute_short_cli": "মিন",
+  "hour_short_cli": "ঘ"
 }

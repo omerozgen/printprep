@@ -69,5 +69,8 @@
   "msg_printer_used": "Printer sing dianggo: {name} ({src}).",
   "msg_printers_detected": "{n} printer kadeteksi saka slicer sing diinstal.",
   "msg_printer_usage": "Gunakake 'printprep suggest --printer \"<jeneng>\"' utawa '--auto-printer' kanggo nyetel profil.",
-  "err_printer_profile_failed": "Ora bisa maca profil printer: {path}"
+  "err_printer_profile_failed": "Ora bisa maca profil printer: {path}",
+  "msg_estimate_basis": "Estimasi adhedhasar setelan aktif slicer panjenengan: lapisan {layer}mm, infill {infill}%, {speed}mm/s, {material}.",
+  "minute_short_cli": "mnt",
+  "hour_short_cli": "jam"
 }

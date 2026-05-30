@@ -69,5 +69,8 @@
   "msg_printer_used": "ਵਰਤਿਆ ਪ੍ਰਿੰਟਰ: {name} ({src})।",
   "msg_printers_detected": "ਇੰਸਟਾਲ ਕੀਤੇ ਸਲਾਈਸਰਾਂ ਤੋਂ {n} ਪ੍ਰਿੰਟਰ ਪਛਾਣੇ ਗਏ।",
   "msg_printer_usage": "ਪ੍ਰੋਫਾਈਲ ਅਨੁਕੂਲ ਕਰਨ ਲਈ 'printprep suggest --printer \"<ਨਾਮ>\"' ਜਾਂ '--auto-printer' ਵਰਤੋ।",
-  "err_printer_profile_failed": "ਪ੍ਰਿੰਟਰ ਪ੍ਰੋਫਾਈਲ ਪੜ੍ਹ ਨਹੀਂ ਸਕਿਆ: {path}"
+  "err_printer_profile_failed": "ਪ੍ਰਿੰਟਰ ਪ੍ਰੋਫਾਈਲ ਪੜ੍ਹ ਨਹੀਂ ਸਕਿਆ: {path}",
+  "msg_estimate_basis": "ਅਨੁਮਾਨ ਤੁਹਾਡੇ ਸਲਾਈਸਰ ਦੀਆਂ ਸਰਗਰਮ ਸੈਟਿੰਗਾਂ 'ਤੇ ਆਧਾਰਿਤ: {layer}ਮਿਮੀ ਪਰਤ, {infill}% ਇਨਫਿਲ, {speed}ਮਿਮੀ/ਸ, {material}।",
+  "minute_short_cli": "ਮਿੰਟ",
+  "hour_short_cli": "ਘੰ"
 }
