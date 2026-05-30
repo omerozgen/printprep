@@ -47,13 +47,15 @@ def _config_roots() -> Dict[str, List[str]]:
 
 
 def _classify(rel_dir: str, filename: str):
-    """Guess whether a file looks like a filament or a process profile."""
+    """Guess whether a file looks like a filament, process or machine profile."""
     parts = set(rel_dir.lower().replace("\\", "/").split("/"))
     name = filename.lower()
     if name.endswith(".fdm_material"):
         return "filament"
     if {"filament", "filaments"} & parts or "filament" in name:
         return "filament"
+    if {"machine", "printer", "printers"} & parts or "machine" in name:
+        return "machine"
     if {"process", "print", "print_settings"} & parts:
         return "process"
     return None
@@ -83,3 +85,30 @@ def discover_profiles(roots: Dict[str, List[str]] = None) -> List[Dict[str, str]
                     })
     found.sort(key=lambda r: (r["slicer"], r["kind"], r["name"].lower()))
     return found
+
+
+def discover_printers(roots: Dict[str, List[str]] = None) -> List[Dict]:
+    """Find machine profiles in installed slicers and parse them to PrinterSpec.
+
+    Returns a list of {slicer, path, spec} where `spec` is a PrinterSpec.
+    Only OrcaSlicer-schema slicers (OrcaSlicer / Creality Print / Anycubic
+    Slicer) are parsed; entries that don't parse are skipped.
+    """
+    # Imported lazily so `discover_profiles` has no hard dependency on printer.py.
+    from printprep.slicer.printer import parse_machine_file
+
+    printers: List[Dict] = []
+    seen = set()
+    for row in discover_profiles(roots):
+        if row["kind"] != "machine":
+            continue
+        spec = parse_machine_file(row["path"])
+        if spec is None:
+            continue
+        key = (spec.name, spec.bed_x_mm, spec.bed_y_mm)
+        if key in seen:
+            continue
+        seen.add(key)
+        printers.append({"slicer": row["slicer"], "path": row["path"], "spec": spec})
+    printers.sort(key=lambda r: (r["slicer"], r["spec"].name.lower()))
+    return printers

@@ -1,5 +1,8 @@
 {
-  "_meta": { "name": "Türkçe", "code": "tr" },
+  "_meta": {
+    "name": "Türkçe",
+    "code": "tr"
+  },
   "cli_group_help": "STL model analizi ve slicer ayar önerileri.",
   "cmd_analyze_help": "Bir modeli analiz et; geometri, sorunlar ve overhangları raporla.",
   "cmd_fix_help": "Yaygın mesh sorunlarını onar ve düzeltilmiş STL'i yaz.",
@@ -17,7 +20,7 @@
   "opt_suggest_import": "Slicer'dan dışa aktarılmış bir malzeme profili kullan (.json/.ini/.fdm_material).",
   "opt_suggest_export": "JSON yazdırmak yerine slicer'a aktarılabilir profil dosyaları yaz.",
   "opt_suggest_outdir": "--export çıktı dosyaları için klasör.",
-  "opt_suggest_printer": "--export orca için hedef yazıcı adı (örn. \"Creality K1 Max 0.4 nozzle\").",
+  "opt_suggest_printer": "Yazıcı adı — gömülü özellikleri arar ve dışa aktarılan preseti ona bağlar (örn. \"Anycubic Kobra 3 Max\").",
   "opt_suggest_price": "Kg başına filament fiyatı (örn. 25). Maliyet tahmini eklenir.",
   "opt_suggest_currency": "Maliyet yanında gösterilecek para birimi (örn. TL, USD, EUR).",
   "opt_orient_output": "Yeniden döndürülmüş STL'in yazılacağı yer.",
@@ -59,5 +62,12 @@
   "err_not_a_directory": "Klasör değil: {path}",
   "err_no_files_matching": "'{pattern}' ile eşleşen dosya yok: {dir}",
   "err_invalid_bed": "Geçersiz --bed '{bed}'. Beklenen format: '420x420'.",
-  "err_nothing_to_pack": "Paketlenecek bir şey yok."
+  "err_nothing_to_pack": "Paketlenecek bir şey yok.",
+  "opt_suggest_printer_profile": "Tam yazıcı özellikleri için slicer machine profili yolu (.json).",
+  "opt_suggest_auto_printer": "Yazıcıyı kurulu slicer'dan otomatik algıla.",
+  "cmd_printer_list_help": "Algılanan (slicer'ından) ve gömülü yazıcıları listele.",
+  "msg_printer_used": "Kullanılan yazıcı: {name} ({src}).",
+  "msg_printers_detected": "Kurulu slicer'lardan {n} yazıcı algılandı.",
+  "msg_printer_usage": "Profili özelleştirmek için 'printprep suggest --printer \"<ad>\"' veya '--auto-printer' kullan.",
+  "err_printer_profile_failed": "Yazıcı profili okunamadı: {path}"
 }

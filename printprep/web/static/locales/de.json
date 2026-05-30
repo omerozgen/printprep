@@ -1,5 +1,9 @@
 {
-  "_meta": { "name": "Deutsch", "code": "de", "dir": "ltr" },
+  "_meta": {
+    "name": "Deutsch",
+    "code": "de",
+    "dir": "ltr"
+  },
   "title": "PrintPrep — STL-Analyse & Slicer-Vorschlag",
   "header_subtitle": "STL-Modellanalyse, Reparatur und Slicer-Profilvorschlag",
   "drop_title": "STL-Datei hier ablegen",
@@ -144,5 +148,8 @@
   "prop_retraction_speed": "Retraction-Geschwindigkeit",
   "prop_filament": "Filament",
   "prop_time": "Geschätzte Zeit",
-  "prop_cost": "Kosten"
+  "prop_cost": "Kosten",
+  "label_printer": "Drucker",
+  "printer_none": "Generisch / nicht angegeben",
+  "printer_detected": "(erkannt)"
 }

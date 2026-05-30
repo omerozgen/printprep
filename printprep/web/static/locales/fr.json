@@ -1,5 +1,9 @@
 {
-  "_meta": { "name": "Français", "code": "fr", "dir": "ltr" },
+  "_meta": {
+    "name": "Français",
+    "code": "fr",
+    "dir": "ltr"
+  },
   "title": "PrintPrep — Analyse STL et suggestion de slicer",
   "header_subtitle": "Analyse, réparation et suggestion de profil de slicer pour modèles STL",
   "drop_title": "Déposez votre fichier STL ici",
@@ -144,5 +148,8 @@
   "prop_retraction_speed": "Vitesse de rétraction",
   "prop_filament": "Filament",
   "prop_time": "Temps estimé",
-  "prop_cost": "Coût"
+  "prop_cost": "Coût",
+  "label_printer": "Imprimante",
+  "printer_none": "Générique / non spécifiée",
+  "printer_detected": "(détectée)"
 }

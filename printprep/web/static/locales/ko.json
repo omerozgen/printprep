@@ -1,5 +1,9 @@
 {
-  "_meta": { "name": "한국어", "code": "ko", "dir": "ltr" },
+  "_meta": {
+    "name": "한국어",
+    "code": "ko",
+    "dir": "ltr"
+  },
   "title": "PrintPrep — STL 분석 및 슬라이서 제안",
   "header_subtitle": "STL 모델 분석, 수리, 슬라이서 프로필 제안",
   "drop_title": "여기에 STL 파일을 끌어놓으세요",
@@ -144,5 +148,8 @@
   "prop_retraction_speed": "리트랙션 속도",
   "prop_filament": "필라멘트",
   "prop_time": "추정 시간",
-  "prop_cost": "비용"
+  "prop_cost": "비용",
+  "label_printer": "프린터",
+  "printer_none": "일반 / 미지정",
+  "printer_detected": "(감지됨)"
 }

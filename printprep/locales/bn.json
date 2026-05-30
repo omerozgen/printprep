@@ -1,5 +1,8 @@
 {
-  "_meta": { "name": "বাংলা", "code": "bn" },
+  "_meta": {
+    "name": "বাংলা",
+    "code": "bn"
+  },
   "cli_group_help": "STL মডেল বিশ্লেষণ ও স্লাইসার সেটিং পরামর্শ।",
   "cmd_analyze_help": "একটি মডেল বিশ্লেষণ করে জ্যামিতি, সমস্যা ও ওভারহ্যাং রিপোর্ট করুন।",
   "cmd_fix_help": "সাধারণ মেশ সমস্যা মেরামত করে সংশোধিত STL লিখুন।",
@@ -17,7 +20,7 @@
   "opt_suggest_import": "আপনার স্লাইসার থেকে রপ্তানি করা উপাদান প্রোফাইল ব্যবহার করুন (.json/.ini/.fdm_material)।",
   "opt_suggest_export": "JSON প্রিন্ট করার পরিবর্তে স্লাইসার-আমদানিযোগ্য প্রোফাইল ফাইল লিখুন।",
   "opt_suggest_outdir": "--export আউটপুট ফাইলের জন্য ডিরেক্টরি।",
-  "opt_suggest_printer": "--export orca-এর জন্য লক্ষ্য প্রিন্টার নাম (যেমন \"Creality K1 Max 0.4 nozzle\")।",
+  "opt_suggest_printer": "প্রিন্টার নাম — অন্তর্নির্মিত স্পেসিফিকেশন খোঁজে এবং রপ্তানি করা প্রিসেট বাঁধে (যেমন \"Anycubic Kobra 3 Max\")।",
   "opt_suggest_price": "প্রতি কেজি ফিলামেন্ট মূল্য (যেমন 2000)। খরচের অনুমান যোগ করে।",
   "opt_suggest_currency": "খরচের পাশে দেখানো মুদ্রা (যেমন BDT, USD)।",
   "opt_orient_output": "পুনঃ-অভিমুখী STL কোথায় লিখবেন।",
@@ -59,5 +62,12 @@
   "err_not_a_directory": "ডিরেক্টরি নয়: {path}",
   "err_no_files_matching": "{dir}-এ '{pattern}'-এর সাথে মিলে এমন ফাইল নেই",
   "err_invalid_bed": "অবৈধ --bed '{bed}'। প্রত্যাশিত: '420x420'।",
-  "err_nothing_to_pack": "প্যাক করার কিছু নেই।"
+  "err_nothing_to_pack": "প্যাক করার কিছু নেই।",
+  "opt_suggest_printer_profile": "সঠিক প্রিন্টার স্পেসিফিকেশনের জন্য স্লাইসার মেশিন প্রোফাইল (.json) এর পথ।",
+  "opt_suggest_auto_printer": "আপনার ইনস্টল করা স্লাইসার থেকে প্রিন্টার স্বয়ংক্রিয় শনাক্ত করুন।",
+  "cmd_printer_list_help": "শনাক্ত করা (আপনার স্লাইসার থেকে) ও অন্তর্নির্মিত প্রিন্টার তালিকাভুক্ত করুন।",
+  "msg_printer_used": "ব্যবহৃত প্রিন্টার: {name} ({src})।",
+  "msg_printers_detected": "ইনস্টল করা স্লাইসার থেকে {n}টি প্রিন্টার শনাক্ত হয়েছে।",
+  "msg_printer_usage": "প্রোফাইল মানানসই করতে 'printprep suggest --printer \"<নাম>\"' বা '--auto-printer' ব্যবহার করুন।",
+  "err_printer_profile_failed": "প্রিন্টার প্রোফাইল পড়া যায়নি: {path}"
 }

@@ -1,5 +1,9 @@
 {
-  "_meta": { "name": "ਪੰਜਾਬੀ", "code": "pa", "dir": "ltr" },
+  "_meta": {
+    "name": "ਪੰਜਾਬੀ",
+    "code": "pa",
+    "dir": "ltr"
+  },
   "title": "PrintPrep — STL ਵਿਸ਼ਲੇਸ਼ਣ ਅਤੇ ਸਲਾਈਸਰ ਸਲਾਹ",
   "header_subtitle": "STL ਮਾਡਲ ਵਿਸ਼ਲੇਸ਼ਣ, ਮੁਰੰਮਤ ਅਤੇ ਸਲਾਈਸਰ ਪ੍ਰੋਫਾਈਲ ਸਲਾਹ",
   "drop_title": "ਆਪਣੀ STL ਫਾਈਲ ਇੱਥੇ ਘਸੀਟੋ",
@@ -144,5 +148,8 @@
   "prop_retraction_speed": "ਰਿਟ੍ਰੈਕਸ਼ਨ ਗਤੀ",
   "prop_filament": "ਫਿਲਾਮੈਂਟ",
   "prop_time": "ਅਨੁਮਾਨਿਤ ਸਮਾਂ",
-  "prop_cost": "ਲਾਗਤ"
+  "prop_cost": "ਲਾਗਤ",
+  "label_printer": "ਪ੍ਰਿੰਟਰ",
+  "printer_none": "ਆਮ / ਅਣ-ਦੱਸਿਆ",
+  "printer_detected": "(ਪਛਾਣਿਆ)"
 }

@@ -1,5 +1,9 @@
 {
-  "_meta": { "name": "Basa Jawa", "code": "jv", "dir": "ltr" },
+  "_meta": {
+    "name": "Basa Jawa",
+    "code": "jv",
+    "dir": "ltr"
+  },
   "title": "PrintPrep — Analisis STL lan saran slicer",
   "header_subtitle": "Analisis model STL, ndandani, lan saran profil slicer",
   "drop_title": "Sered file STL panjenengan ing kene",
@@ -144,5 +148,8 @@
   "prop_retraction_speed": "Kecepatan retraksi",
   "prop_filament": "Filamen",
   "prop_time": "Wektu perkiraan",
-  "prop_cost": "Biaya"
+  "prop_cost": "Biaya",
+  "label_printer": "Printer",
+  "printer_none": "Umum / ora kasebut",
+  "printer_detected": "(kadeteksi)"
 }

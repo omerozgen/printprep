@@ -46,7 +46,12 @@ def estimate_print_job(result: AnalysisResult, profile: SlicerProfile,
                        filament_diameter_mm: float = 1.75,
                        line_width_mm: Optional[float] = None) -> PrintEstimate:
     """Estimate filament use and print time from analysis + slicer profile."""
-    line_w = line_width_mm if line_width_mm is not None else defaults.LINE_WIDTH_MM
+    if line_width_mm is not None:
+        line_w = line_width_mm
+    else:
+        # Derive from the profile's nozzle when known (real printer), else default.
+        nozzle = getattr(profile, "nozzle_diameter_mm", defaults.NOZZLE_DIAMETER_MM)
+        line_w = round(nozzle * 1.05, 3)
     layer = profile.layer_height_mm
     walls = max(1, profile.wall_count)
     infill_pct = max(0.0, min(100.0, float(profile.infill_pct))) / 100.0

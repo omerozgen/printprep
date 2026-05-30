@@ -49,6 +49,7 @@ const els = {
   suggestSection: document.getElementById("suggest-section"),
   slicerSelect: document.getElementById("slicer-select"),
   materialSelect: document.getElementById("material-select"),
+  printerSelect: document.getElementById("printer-select"),
   suggestBtn: document.getElementById("suggest-btn"),
   profileInput: document.getElementById("profile-input"),
   importBtn: document.getElementById("import-btn"),
@@ -570,6 +571,7 @@ els.suggestBtn.addEventListener("click", async () => {
   form.append("model", currentFile);
   form.append("slicer", els.slicerSelect.value);
   form.append("material", els.materialSelect.value);
+  if (els.printerSelect.value) form.append("printer", els.printerSelect.value);
   const price = parseFloat(els.priceInput.value);
   if (!isNaN(price) && price > 0) {
     form.append("price_per_kg", String(price));
@@ -581,6 +583,11 @@ els.suggestBtn.addEventListener("click", async () => {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || t("error_suggest_failed"));
     renderProfile(data);
+    if (data.bed_fit_warning) {
+      showStatus("⚠ " + data.bed_fit_warning, true);
+    } else {
+      hideStatus();
+    }
   } catch (err) {
     showStatus(err.message, true);
   } finally {
@@ -609,7 +616,8 @@ els.exportBtn.addEventListener("click", async () => {
   form.append("slicer", els.slicerSelect.value);
   form.append("material", els.materialSelect.value);
   form.append("fmt", fmt);
-  const printerName = els.exportPrinter.value.trim();
+  // Free-text override wins; otherwise bind to the selected printer.
+  const printerName = els.exportPrinter.value.trim() || els.printerSelect.value;
   if (printerName) form.append("printer", printerName);
   if (importedProfile) form.append("profile", importedProfile);
   try {
@@ -648,6 +656,26 @@ els.exportBtn.addEventListener("click", async () => {
     if (opts.slicers.includes("creality")) els.slicerSelect.value = "creality";
     if (opts.materials.includes("pla")) els.materialSelect.value = "pla";
   } catch (_) { /* options endpoint unavailable */ }
+})();
+
+// ---- printer dropdown ----
+(async function loadPrinters() {
+  try {
+    const res = await fetch("/api/printers");
+    const data = await res.json();
+    const opts = [`<option value="">${t("printer_none")}</option>`];
+    const detected = data.printers.filter((p) => p.source === "slicer");
+    const bundled = data.printers.filter((p) => p.source === "bundled");
+    for (const p of detected) {
+      opts.push(`<option value="${p.name}">${p.name} ${t("printer_detected")}</option>`);
+    }
+    for (const p of bundled) {
+      opts.push(`<option value="${p.name}">${p.name}</option>`);
+    }
+    els.printerSelect.innerHTML = opts.join("");
+    // If a printer was auto-detected from the user's slicer, prefer it.
+    if (detected.length) els.printerSelect.value = detected[0].name;
+  } catch (_) { /* printers endpoint unavailable */ }
 })();
 
 // ---- batch analysis ----

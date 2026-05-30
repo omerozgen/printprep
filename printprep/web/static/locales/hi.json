@@ -1,5 +1,9 @@
 {
-  "_meta": { "name": "हिन्दी", "code": "hi", "dir": "ltr" },
+  "_meta": {
+    "name": "हिन्दी",
+    "code": "hi",
+    "dir": "ltr"
+  },
   "title": "PrintPrep — STL विश्लेषण और स्लाइसर सुझाव",
   "header_subtitle": "STL मॉडल विश्लेषण, मरम्मत और स्लाइसर प्रोफाइल सुझाव",
   "drop_title": "अपनी STL फ़ाइल यहाँ खींचें",
@@ -144,5 +148,8 @@
   "prop_retraction_speed": "रिट्रैक्शन गति",
   "prop_filament": "फिलामेंट",
   "prop_time": "अनुमानित समय",
-  "prop_cost": "लागत"
+  "prop_cost": "लागत",
+  "label_printer": "प्रिंटर",
+  "printer_none": "सामान्य / अनिर्दिष्ट",
+  "printer_detected": "(पहचाना गया)"
 }

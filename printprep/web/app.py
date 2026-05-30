@@ -24,9 +24,12 @@ from printprep.core import (
 )
 from printprep.config.presets import get_material
 from printprep.slicer import (
+    BUNDLED_PRINTERS,
     EXPORT_FORMATS,
     SLICER_NAMES,
+    bed_fit_warning,
     export_profile,
+    get_bundled,
     get_slicer,
     parse_material_profile,
 )
@@ -34,6 +37,22 @@ from printprep.slicer import (
 STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 
 app = FastAPI(title="PrintPrep", version=__version__)
+
+
+def _resolve_printer_by_name(name: str):
+    """Resolve a printer name to a PrinterSpec: detected slicers first, then the
+    bundled database. None for empty/unknown names."""
+    name = (name or "").strip()
+    if not name:
+        return None
+    try:
+        from printprep.slicer.discover import discover_printers
+        for row in discover_printers():
+            if name.lower() in row["spec"].name.lower():
+                return row["spec"]
+    except Exception:
+        pass
+    return get_bundled(name)
 
 
 @contextmanager
@@ -56,6 +75,27 @@ def options():
     return {"slicers": list(SLICER_NAMES), "materials": sorted(MATERIAL_PRESETS)}
 
 
+@app.get("/api/printers")
+def printers():
+    """Printers for the UI dropdown: auto-detected (from installed slicers)
+    first, then the bundled database."""
+    out = []
+    try:
+        from printprep.slicer.discover import discover_printers
+        for row in discover_printers():
+            s = row["spec"]
+            out.append({"name": s.name, "source": "slicer", "slicer": row["slicer"],
+                        "bed": [s.bed_x_mm, s.bed_y_mm, s.bed_z_mm],
+                        "nozzle_diameter_mm": s.nozzle_diameter_mm})
+    except Exception:
+        pass
+    for s in BUNDLED_PRINTERS:
+        out.append({"name": s.name, "source": "bundled",
+                    "bed": [s.bed_x_mm, s.bed_y_mm, s.bed_z_mm],
+                    "nozzle_diameter_mm": s.nozzle_diameter_mm})
+    return {"printers": out}
+
+
 @app.post("/api/analyze")
 def api_analyze(model: UploadFile):
     try:
@@ -71,6 +111,7 @@ def api_analyze(model: UploadFile):
 @app.post("/api/suggest")
 def api_suggest(model: UploadFile, slicer: str = Form("creality"),
                 material: str = Form("pla"),
+                printer: str = Form(""),
                 price_per_kg: Optional[float] = Form(None),
                 currency: str = Form(""),
                 profile: Optional[UploadFile] = File(None)):
@@ -78,21 +119,25 @@ def api_suggest(model: UploadFile, slicer: str = Form("creality"),
         with _uploaded_mesh(model) as mesh:
             result = analyze(mesh, path=model.filename or "")
         generator = get_slicer(slicer)
+        printer_spec = _resolve_printer_by_name(printer)
         if profile is not None and profile.filename:
             imported = parse_material_profile(
                 profile.file.read().decode("utf-8", "replace"), profile.filename)
-            built = generator.build_profile_from_preset(result, imported)
+            built = generator.build_profile_from_preset(result, imported, printer_spec)
             preset = imported
         else:
             preset = get_material(material)
-            built = generator.build_profile_from_preset(result, preset)
+            built = generator.build_profile_from_preset(result, preset, printer_spec)
         estimate = estimate_print_job(result, built, preset,
                                       price_per_kg=price_per_kg, currency=currency)
+        warn = bed_fit_warning(result, printer_spec)
     except PrintPrepError as exc:
         return JSONResponse(status_code=400, content={"error": str(exc)})
     except KeyError as exc:
         return JSONResponse(status_code=400, content={"error": str(exc).strip('"')})
-    return {"profile": asdict(built), "estimate": asdict(estimate)}
+    return {"profile": asdict(built), "estimate": asdict(estimate),
+            "printer": (printer_spec.name if printer_spec else None),
+            "bed_fit_warning": (warn["text"] if warn else None)}
 
 
 @app.post("/api/export")
@@ -106,12 +151,13 @@ def api_export(model: UploadFile, slicer: str = Form("creality"),
         with _uploaded_mesh(model) as mesh:
             result = analyze(mesh, path=model.filename or "")
         generator = get_slicer(slicer)
+        printer_spec = _resolve_printer_by_name(printer)
         if profile is not None and profile.filename:
             imported = parse_material_profile(
                 profile.file.read().decode("utf-8", "replace"), profile.filename)
-            built = generator.build_profile_from_preset(result, imported)
+            built = generator.build_profile_from_preset(result, imported, printer_spec)
         else:
-            built = generator.build_profile(result, material)
+            built = generator.build_profile(result, material, printer_spec)
         files = export_profile(built, fmt, printer=printer)
     except PrintPrepError as exc:
         return JSONResponse(status_code=400, content={"error": str(exc)})

@@ -1,5 +1,8 @@
 {
-  "_meta": { "name": "Español", "code": "es" },
+  "_meta": {
+    "name": "Español",
+    "code": "es"
+  },
   "cli_group_help": "Análisis de modelos STL y recomendaciones de configuración de slicer.",
   "cmd_analyze_help": "Analiza un modelo y reporta geometría, problemas y voladizos.",
   "cmd_fix_help": "Repara problemas comunes de la malla y escribe un STL corregido.",
@@ -17,7 +20,7 @@
   "opt_suggest_import": "Usar un perfil exportado desde tu slicer (.json/.ini/.fdm_material).",
   "opt_suggest_export": "Escribir archivos de perfil importables en lugar de imprimir JSON.",
   "opt_suggest_outdir": "Directorio para los archivos de --export.",
-  "opt_suggest_printer": "Nombre de la impresora objetivo para --export orca (ej. \"Creality K1 Max 0.4 nozzle\").",
+  "opt_suggest_printer": "Nombre de impresora — busca especificaciones incluidas y vincula el perfil exportado (ej. \"Anycubic Kobra 3 Max\").",
   "opt_suggest_price": "Precio del filamento por kg (ej. 25). Añade estimación de costo.",
   "opt_suggest_currency": "Etiqueta de moneda mostrada junto al costo (ej. EUR, USD, MXN).",
   "opt_orient_output": "Dónde escribir el STL reorientado.",
@@ -59,5 +62,12 @@
   "err_not_a_directory": "No es un directorio: {path}",
   "err_no_files_matching": "Sin archivos que coincidan con '{pattern}' en {dir}",
   "err_invalid_bed": "--bed '{bed}' inválido. Esperado formato '420x420'.",
-  "err_nothing_to_pack": "Nada que empaquetar."
+  "err_nothing_to_pack": "Nada que empaquetar.",
+  "opt_suggest_printer_profile": "Ruta a un perfil de máquina del slicer (.json) para especificaciones exactas.",
+  "opt_suggest_auto_printer": "Detectar la impresora automáticamente desde tu slicer instalado.",
+  "cmd_printer_list_help": "Lista impresoras detectadas (de tu slicer) e incluidas.",
+  "msg_printer_used": "Usando impresora: {name} ({src}).",
+  "msg_printers_detected": "{n} impresora(s) detectada(s) de slicers instalados.",
+  "msg_printer_usage": "Usa 'printprep suggest --printer \"<nombre>\"' o '--auto-printer' para adaptar el perfil.",
+  "err_printer_profile_failed": "No se pudo leer el perfil de impresora: {path}"
 }

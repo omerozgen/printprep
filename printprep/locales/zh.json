@@ -1,5 +1,8 @@
 {
-  "_meta": { "name": "中文", "code": "zh" },
+  "_meta": {
+    "name": "中文",
+    "code": "zh"
+  },
   "cli_group_help": "STL 模型分析与切片机配置建议。",
   "cmd_analyze_help": "分析模型并报告几何、问题和悬垂。",
   "cmd_fix_help": "修复常见 mesh 问题并写出修复后的 STL。",
@@ -17,7 +20,7 @@
   "opt_suggest_import": "使用从切片机导出的材料配置(.json/.ini/.fdm_material)。",
   "opt_suggest_export": "写入切片机可导入的配置文件,而不是打印 JSON。",
   "opt_suggest_outdir": "--export 输出文件的目录。",
-  "opt_suggest_printer": "--export orca 的目标打印机名(例如 \"Creality K1 Max 0.4 nozzle\")。",
+  "opt_suggest_printer": "打印机名称 — 查找内置规格并将导出的预设绑定到它(例如 \"Anycubic Kobra 3 Max\")。",
   "opt_suggest_price": "每公斤耗材价格(例如 25)。在输出中添加费用估算。",
   "opt_suggest_currency": "费用旁显示的货币标签(例如 CNY、USD、EUR)。",
   "opt_orient_output": "重新定向 STL 的输出位置。",
@@ -59,5 +62,12 @@
   "err_not_a_directory": "不是目录: {path}",
   "err_no_files_matching": "{dir} 中未找到匹配 '{pattern}' 的文件",
   "err_invalid_bed": "无效的 --bed '{bed}'。期望格式: '420x420'。",
-  "err_nothing_to_pack": "没有可排列的内容。"
+  "err_nothing_to_pack": "没有可排列的内容。",
+  "opt_suggest_printer_profile": "切片机打印机配置(.json)的路径,用于精确的打印机规格。",
+  "opt_suggest_auto_printer": "从已安装的切片机自动检测打印机。",
+  "cmd_printer_list_help": "列出检测到的(来自切片机)和内置打印机。",
+  "msg_printer_used": "使用打印机: {name} ({src})。",
+  "msg_printers_detected": "从已安装的切片机检测到 {n} 台打印机。",
+  "msg_printer_usage": "使用 'printprep suggest --printer \"<名称>\"' 或 '--auto-printer' 定制配置。",
+  "err_printer_profile_failed": "无法读取打印机配置: {path}"
 }

@@ -1,5 +1,8 @@
 {
-  "_meta": { "name": "Basa Jawa", "code": "jv" },
+  "_meta": {
+    "name": "Basa Jawa",
+    "code": "jv"
+  },
   "cli_group_help": "Analisis model STL lan saran setelan slicer.",
   "cmd_analyze_help": "Analisis model lan laporke geometri, masalah lan overhang.",
   "cmd_fix_help": "Ndandani masalah mesh umum lan tulis STL sing didandani.",
@@ -17,7 +20,7 @@
   "opt_suggest_import": "Gunakake profil materi sing diekspor saka slicer panjenengan (.json/.ini/.fdm_material).",
   "opt_suggest_export": "Tulis file profil sing bisa diimpor slicer ganti cetak JSON.",
   "opt_suggest_outdir": "Direktori kanggo file output --export.",
-  "opt_suggest_printer": "Jeneng printer target kanggo --export orca (tuladha \"Creality K1 Max 0.4 nozzle\").",
+  "opt_suggest_printer": "Jeneng printer — nggoleki spesifikasi bawaan lan ngiket preset sing diekspor (tuladha \"Anycubic Kobra 3 Max\").",
   "opt_suggest_price": "Rega filamen saben kg (tuladha 25). Nambah estimasi biaya.",
   "opt_suggest_currency": "Label mata uang ing jejer biaya (tuladha IDR, USD).",
   "opt_orient_output": "Endi STL diorientasi ditulis.",
@@ -59,5 +62,12 @@
   "err_not_a_directory": "Dudu direktori: {path}",
   "err_no_files_matching": "Ora ana file cocog '{pattern}' ing {dir}",
   "err_invalid_bed": "--bed '{bed}' ora sah. Format dikarepake: '420x420'.",
-  "err_nothing_to_pack": "Ora ana sing dipak."
+  "err_nothing_to_pack": "Ora ana sing dipak.",
+  "opt_suggest_printer_profile": "Path menyang profil mesin slicer (.json) kanggo spesifikasi printer sing tepat.",
+  "opt_suggest_auto_printer": "Deteksi printer otomatis saka slicer sing wis diinstal.",
+  "cmd_printer_list_help": "Daftar printer sing kadeteksi (saka slicer) lan bawaan.",
+  "msg_printer_used": "Printer sing dianggo: {name} ({src}).",
+  "msg_printers_detected": "{n} printer kadeteksi saka slicer sing diinstal.",
+  "msg_printer_usage": "Gunakake 'printprep suggest --printer \"<jeneng>\"' utawa '--auto-printer' kanggo nyetel profil.",
+  "err_printer_profile_failed": "Ora bisa maca profil printer: {path}"
 }

@@ -1,0 +1,96 @@
+{
+  "_source": "Build-volume and nozzle figures are factual hardware specs taken from each manufacturer's public product pages. Retraction values are typical defaults for the printer's extruder type (direct-drive vs Bowden) and are starting points, not exact tuned values — your slicer's machine profile (auto-detected when available) overrides these.",
+  "_note": "These are fallbacks for when no slicer is installed. PrintPrep prefers the printer profile from your installed slicer.",
+  "printers": [
+    {
+      "name": "Anycubic Kobra 3 Max",
+      "bed_x_mm": 420, "bed_y_mm": 420, "bed_z_mm": 500,
+      "nozzle_diameter_mm": 0.4, "max_print_speed_mms": 500,
+      "retraction_mm": 0.8, "retraction_speed_mms": 40
+    },
+    {
+      "name": "Anycubic Kobra S1",
+      "bed_x_mm": 250, "bed_y_mm": 250, "bed_z_mm": 250,
+      "nozzle_diameter_mm": 0.4, "max_print_speed_mms": 600,
+      "retraction_mm": 0.8, "retraction_speed_mms": 40
+    },
+    {
+      "name": "Anycubic Kobra 2 Pro",
+      "bed_x_mm": 220, "bed_y_mm": 220, "bed_z_mm": 250,
+      "nozzle_diameter_mm": 0.4, "max_print_speed_mms": 500,
+      "retraction_mm": 0.8, "retraction_speed_mms": 40
+    },
+    {
+      "name": "Creality K1 Max",
+      "bed_x_mm": 300, "bed_y_mm": 300, "bed_z_mm": 300,
+      "nozzle_diameter_mm": 0.4, "max_print_speed_mms": 600,
+      "retraction_mm": 0.5, "retraction_speed_mms": 40
+    },
+    {
+      "name": "Creality K1",
+      "bed_x_mm": 220, "bed_y_mm": 220, "bed_z_mm": 250,
+      "nozzle_diameter_mm": 0.4, "max_print_speed_mms": 600,
+      "retraction_mm": 0.5, "retraction_speed_mms": 40
+    },
+    {
+      "name": "Creality Ender-3 V3 SE",
+      "bed_x_mm": 220, "bed_y_mm": 220, "bed_z_mm": 250,
+      "nozzle_diameter_mm": 0.4, "max_print_speed_mms": 250,
+      "retraction_mm": 0.8, "retraction_speed_mms": 40
+    },
+    {
+      "name": "Creality CR-10 Smart Pro",
+      "bed_x_mm": 300, "bed_y_mm": 300, "bed_z_mm": 400,
+      "nozzle_diameter_mm": 0.4, "max_print_speed_mms": 200,
+      "retraction_mm": 1.0, "retraction_speed_mms": 40
+    },
+    {
+      "name": "Bambu Lab A1",
+      "bed_x_mm": 256, "bed_y_mm": 256, "bed_z_mm": 256,
+      "nozzle_diameter_mm": 0.4, "max_print_speed_mms": 500,
+      "retraction_mm": 0.8, "retraction_speed_mms": 30
+    },
+    {
+      "name": "Bambu Lab P1S",
+      "bed_x_mm": 256, "bed_y_mm": 256, "bed_z_mm": 256,
+      "nozzle_diameter_mm": 0.4, "max_print_speed_mms": 500,
+      "retraction_mm": 0.8, "retraction_speed_mms": 30
+    },
+    {
+      "name": "Bambu Lab X1 Carbon",
+      "bed_x_mm": 256, "bed_y_mm": 256, "bed_z_mm": 256,
+      "nozzle_diameter_mm": 0.4, "max_print_speed_mms": 500,
+      "retraction_mm": 0.8, "retraction_speed_mms": 30
+    },
+    {
+      "name": "Prusa MK4",
+      "bed_x_mm": 250, "bed_y_mm": 210, "bed_z_mm": 220,
+      "nozzle_diameter_mm": 0.4, "max_print_speed_mms": 200,
+      "retraction_mm": 0.7, "retraction_speed_mms": 35
+    },
+    {
+      "name": "Prusa MINI+",
+      "bed_x_mm": 180, "bed_y_mm": 180, "bed_z_mm": 180,
+      "nozzle_diameter_mm": 0.4, "max_print_speed_mms": 200,
+      "retraction_mm": 3.2, "retraction_speed_mms": 35
+    },
+    {
+      "name": "Generic 220x220 (Ender-style)",
+      "bed_x_mm": 220, "bed_y_mm": 220, "bed_z_mm": 250,
+      "nozzle_diameter_mm": 0.4, "max_print_speed_mms": 150,
+      "retraction_mm": 1.0, "retraction_speed_mms": 40
+    },
+    {
+      "name": "Generic 256x256",
+      "bed_x_mm": 256, "bed_y_mm": 256, "bed_z_mm": 256,
+      "nozzle_diameter_mm": 0.4, "max_print_speed_mms": 300,
+      "retraction_mm": 0.8, "retraction_speed_mms": 40
+    },
+    {
+      "name": "Generic 300x300 (large format)",
+      "bed_x_mm": 300, "bed_y_mm": 300, "bed_z_mm": 400,
+      "nozzle_diameter_mm": 0.4, "max_print_speed_mms": 200,
+      "retraction_mm": 1.0, "retraction_speed_mms": 40
+    }
+  ]
+}

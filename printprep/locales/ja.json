@@ -1,5 +1,8 @@
 {
-  "_meta": { "name": "日本語", "code": "ja" },
+  "_meta": {
+    "name": "日本語",
+    "code": "ja"
+  },
   "cli_group_help": "STL モデル解析とスライサー設定の提案。",
   "cmd_analyze_help": "モデルを解析し、形状・問題・オーバーハングを報告する。",
   "cmd_fix_help": "一般的なメッシュ問題を修復し、修復済 STL を書き出す。",
@@ -17,7 +20,7 @@
   "opt_suggest_import": "スライサーからエクスポートした材料プロファイルを使用 (.json/.ini/.fdm_material)。",
   "opt_suggest_export": "JSON を表示する代わりにスライサー取り込み可能なプロファイルを書き出し。",
   "opt_suggest_outdir": "--export の出力先ディレクトリ。",
-  "opt_suggest_printer": "--export orca の対象プリンター名 (例: \"Creality K1 Max 0.4 nozzle\")。",
+  "opt_suggest_printer": "プリンター名 — 内蔵仕様を検索しエクスポートプリセットを紐付け (例 \"Anycubic Kobra 3 Max\")。",
   "opt_suggest_price": "フィラメント kg 単価 (例 25)。コスト推定を追加。",
   "opt_suggest_currency": "コスト横の通貨ラベル (例: JPY, USD)。",
   "opt_orient_output": "再配向 STL の書き出し先。",
@@ -59,5 +62,12 @@
   "err_not_a_directory": "ディレクトリではありません: {path}",
   "err_no_files_matching": "{dir} に '{pattern}' に一致するファイルがありません",
   "err_invalid_bed": "無効な --bed '{bed}'。期待形式: '420x420'。",
-  "err_nothing_to_pack": "パックするものがありません。"
+  "err_nothing_to_pack": "パックするものがありません。",
+  "opt_suggest_printer_profile": "正確なプリンター仕様用のスライサーマシンプロファイル(.json)のパス。",
+  "opt_suggest_auto_printer": "インストール済みスライサーからプリンターを自動検出。",
+  "cmd_printer_list_help": "検出された(スライサーから)プリンターと内蔵プリンターを一覧表示。",
+  "msg_printer_used": "使用プリンター: {name} ({src})。",
+  "msg_printers_detected": "インストール済みスライサーから {n} 台のプリンターを検出。",
+  "msg_printer_usage": "プロファイル調整には 'printprep suggest --printer \"<名前>\"' または '--auto-printer' を使用。",
+  "err_printer_profile_failed": "プリンタープロファイルを読み込めません: {path}"
 }

@@ -1,5 +1,8 @@
 {
-  "_meta": { "name": "English", "code": "en" },
+  "_meta": {
+    "name": "English",
+    "code": "en"
+  },
   "cli_group_help": "STL model analysis and slicer setting recommendations.",
   "cmd_analyze_help": "Analyze a model and report geometry, problems and overhangs.",
   "cmd_fix_help": "Repair common mesh problems and write a fixed STL.",
@@ -17,7 +20,7 @@
   "opt_suggest_import": "Use a material profile exported from your slicer (.json/.ini/.fdm_material).",
   "opt_suggest_export": "Write slicer-importable profile files instead of printing JSON.",
   "opt_suggest_outdir": "Directory for --export output files.",
-  "opt_suggest_printer": "Target printer name for --export orca (e.g. \"Creality K1 Max 0.4 nozzle\").",
+  "opt_suggest_printer": "Printer name — looks up bundled specs and binds the exported preset to it (e.g. \"Anycubic Kobra 3 Max\").",
   "opt_suggest_price": "Filament price per kg (e.g. 25). Adds a cost estimate to the output.",
   "opt_suggest_currency": "Currency label shown next to cost (e.g. TL, USD, EUR).",
   "opt_orient_output": "Where to write the re-oriented STL.",
@@ -59,5 +62,12 @@
   "err_not_a_directory": "Not a directory: {path}",
   "err_no_files_matching": "No files matching '{pattern}' in {dir}",
   "err_invalid_bed": "Invalid --bed '{bed}'. Expected like '420x420'.",
-  "err_nothing_to_pack": "Nothing to pack."
+  "err_nothing_to_pack": "Nothing to pack.",
+  "opt_suggest_printer_profile": "Path to a slicer machine profile (.json) for exact printer specs.",
+  "opt_suggest_auto_printer": "Auto-detect the printer from your installed slicer.",
+  "cmd_printer_list_help": "List detected (from your slicer) and bundled printers.",
+  "msg_printer_used": "Using printer: {name} ({src}).",
+  "msg_printers_detected": "{n} printer(s) detected from installed slicers.",
+  "msg_printer_usage": "Use 'printprep suggest --printer \"<name>\"' or '--auto-printer' to tailor the profile.",
+  "err_printer_profile_failed": "Could not read printer profile: {path}"
 }

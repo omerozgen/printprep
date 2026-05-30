@@ -1,5 +1,8 @@
 {
-  "_meta": { "name": "Deutsch", "code": "de" },
+  "_meta": {
+    "name": "Deutsch",
+    "code": "de"
+  },
   "cli_group_help": "STL-Modellanalyse und Slicer-Einstellungsempfehlungen.",
   "cmd_analyze_help": "Modell analysieren und Geometrie, Probleme und Überhänge melden.",
   "cmd_fix_help": "Häufige Mesh-Probleme reparieren und reparierten STL schreiben.",
@@ -17,7 +20,7 @@
   "opt_suggest_import": "Material-Profil aus deinem Slicer verwenden (.json/.ini/.fdm_material).",
   "opt_suggest_export": "Slicer-importierbare Profildateien schreiben anstatt JSON zu drucken.",
   "opt_suggest_outdir": "Verzeichnis für --export-Ausgabedateien.",
-  "opt_suggest_printer": "Ziel-Drucker-Name für --export orca (z.B. \"Creality K1 Max 0.4 nozzle\").",
+  "opt_suggest_printer": "Druckername — sucht mitgelieferte Specs und bindet das exportierte Preset (z.B. \"Anycubic Kobra 3 Max\").",
   "opt_suggest_price": "Filamentpreis pro kg (z.B. 25). Fügt Kostenschätzung hinzu.",
   "opt_suggest_currency": "Währungslabel neben Kosten (z.B. EUR, USD).",
   "opt_orient_output": "Wohin das neu ausgerichtete STL geschrieben wird.",
@@ -59,5 +62,12 @@
   "err_not_a_directory": "Kein Verzeichnis: {path}",
   "err_no_files_matching": "Keine Dateien mit '{pattern}' in {dir}",
   "err_invalid_bed": "Ungültiges --bed '{bed}'. Erwartet wie '420x420'.",
-  "err_nothing_to_pack": "Nichts zu packen."
+  "err_nothing_to_pack": "Nichts zu packen.",
+  "opt_suggest_printer_profile": "Pfad zu einem Slicer-Maschinenprofil (.json) für exakte Druckerdaten.",
+  "opt_suggest_auto_printer": "Drucker automatisch aus dem installierten Slicer erkennen.",
+  "cmd_printer_list_help": "Erkannte (aus deinem Slicer) und mitgelieferte Drucker auflisten.",
+  "msg_printer_used": "Verwendeter Drucker: {name} ({src}).",
+  "msg_printers_detected": "{n} Drucker aus installierten Slicern erkannt.",
+  "msg_printer_usage": "Nutze 'printprep suggest --printer \"<Name>\"' oder '--auto-printer' zum Anpassen.",
+  "err_printer_profile_failed": "Druckerprofil konnte nicht gelesen werden: {path}"
 }

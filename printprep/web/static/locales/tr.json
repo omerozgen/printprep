@@ -1,5 +1,9 @@
 {
-  "_meta": { "name": "Türkçe", "code": "tr", "dir": "ltr" },
+  "_meta": {
+    "name": "Türkçe",
+    "code": "tr",
+    "dir": "ltr"
+  },
   "title": "PrintPrep — STL Analiz & Slicer Öneri",
   "header_subtitle": "STL model analizi, onarım ve slicer ayar önerisi",
   "drop_title": "STL dosyanı buraya sürükle",
@@ -144,5 +148,8 @@
   "prop_retraction_speed": "Retraction hızı",
   "prop_filament": "Filament",
   "prop_time": "Tahmini süre",
-  "prop_cost": "Maliyet"
+  "prop_cost": "Maliyet",
+  "label_printer": "Yazıcı",
+  "printer_none": "Genel / belirtilmemiş",
+  "printer_detected": "(algılandı)"
 }

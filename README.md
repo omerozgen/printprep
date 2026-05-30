@@ -15,6 +15,9 @@ to your model.
   print.
 - **Slicer suggestions** — profile presets for Creality Print and
   AnycubicSlicerNext.
+- **Printer-aware** — reads your real printer specs (nozzle, bed size,
+  retraction, max speed) from your installed slicer, or from a bundled
+  printer database. 100% offline. See `printprep printer-list`.
 - **Mesh repair** — basic repair plus optional aggressive escalation via
   `pymeshfix` with a guard that rejects mangled results.
 - **100% local** — model data never leaves your machine. No accounts, no

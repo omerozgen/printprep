@@ -1,5 +1,9 @@
 {
-  "_meta": { "name": "Русский", "code": "ru", "dir": "ltr" },
+  "_meta": {
+    "name": "Русский",
+    "code": "ru",
+    "dir": "ltr"
+  },
   "title": "PrintPrep — Анализ STL и подбор слайсера",
   "header_subtitle": "Анализ STL-моделей, ремонт и подбор профиля слайсера",
   "drop_title": "Перетащите ваш STL-файл сюда",
@@ -144,5 +148,8 @@
   "prop_retraction_speed": "Скорость ретракции",
   "prop_filament": "Филамент",
   "prop_time": "Расчётное время",
-  "prop_cost": "Стоимость"
+  "prop_cost": "Стоимость",
+  "label_printer": "Принтер",
+  "printer_none": "Общий / не указан",
+  "printer_detected": "(обнаружен)"
 }

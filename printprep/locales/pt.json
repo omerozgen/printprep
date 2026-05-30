@@ -1,5 +1,8 @@
 {
-  "_meta": { "name": "Português", "code": "pt" },
+  "_meta": {
+    "name": "Português",
+    "code": "pt"
+  },
   "cli_group_help": "Análise de modelos STL e recomendações de configurações de slicer.",
   "cmd_analyze_help": "Analisa um modelo e reporta geometria, problemas e saliências.",
   "cmd_fix_help": "Repara problemas comuns de malha e escreve um STL corrigido.",
@@ -17,7 +20,7 @@
   "opt_suggest_import": "Usar um perfil exportado do seu slicer (.json/.ini/.fdm_material).",
   "opt_suggest_export": "Escrever arquivos de perfil importáveis em vez de imprimir JSON.",
   "opt_suggest_outdir": "Diretório para arquivos de --export.",
-  "opt_suggest_printer": "Nome da impressora alvo para --export orca (ex. \"Creality K1 Max 0.4 nozzle\").",
+  "opt_suggest_printer": "Nome da impressora — busca especificações incluídas e vincula o perfil exportado (ex. \"Anycubic Kobra 3 Max\").",
   "opt_suggest_price": "Preço do filamento por kg (ex. 100). Adiciona estimativa de custo.",
   "opt_suggest_currency": "Rótulo de moeda mostrado ao lado do custo (ex. BRL, USD).",
   "opt_orient_output": "Onde escrever o STL reorientado.",
@@ -59,5 +62,12 @@
   "err_not_a_directory": "Não é um diretório: {path}",
   "err_no_files_matching": "Sem arquivos com '{pattern}' em {dir}",
   "err_invalid_bed": "--bed '{bed}' inválido. Formato esperado: '420x420'.",
-  "err_nothing_to_pack": "Nada a empacotar."
+  "err_nothing_to_pack": "Nada a empacotar.",
+  "opt_suggest_printer_profile": "Caminho para um perfil de máquina do slicer (.json) para especificações exatas.",
+  "opt_suggest_auto_printer": "Detectar a impressora automaticamente do seu slicer instalado.",
+  "cmd_printer_list_help": "Listar impressoras detectadas (do seu slicer) e incluídas.",
+  "msg_printer_used": "Usando impressora: {name} ({src}).",
+  "msg_printers_detected": "{n} impressora(s) detectada(s) de slicers instalados.",
+  "msg_printer_usage": "Use 'printprep suggest --printer \"<nome>\"' ou '--auto-printer' para adaptar o perfil.",
+  "err_printer_profile_failed": "Não foi possível ler o perfil da impressora: {path}"
 }

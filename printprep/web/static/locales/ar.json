@@ -1,5 +1,9 @@
 {
-  "_meta": { "name": "العربية", "code": "ar", "dir": "rtl" },
+  "_meta": {
+    "name": "العربية",
+    "code": "ar",
+    "dir": "rtl"
+  },
   "title": "PrintPrep — تحليل STL واقتراح الشرائح",
   "header_subtitle": "تحليل نماذج STL، الإصلاح، واقتراح ملف تعريف الشرائح",
   "drop_title": "اسحب ملف STL هنا",
@@ -144,5 +148,8 @@
   "prop_retraction_speed": "سرعة الارتداد",
   "prop_filament": "الفتيل",
   "prop_time": "الوقت المقدر",
-  "prop_cost": "التكلفة"
+  "prop_cost": "التكلفة",
+  "label_printer": "الطابعة",
+  "printer_none": "عامة / غير محددة",
+  "printer_detected": "(مكتشفة)"
 }

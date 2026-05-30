@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Printer-aware suggestions.** PrintPrep can now read your printer's real
+  specs instead of assuming a 0.4mm nozzle / 420×420 bed:
+  - Auto-detects machine profiles from your installed slicer (OrcaSlicer /
+    Creality Print / Anycubic Slicer — one shared JSON schema).
+  - Bundled `config/printers.json` fallback (Anycubic / Creality / Bambu /
+    Prusa / generic) for when no slicer is installed — pick from a dropdown.
+  - Uses the real nozzle diameter (wall count + line width), retraction
+    (which OrcaSlicer stores per-machine), and clamps the recommended print
+    speed to the printer's mechanical max.
+  - Bed-fit check: warns when a model's footprint/height won't fit the bed.
+  - CLI: `printprep suggest --printer "<name>"`, `--printer-profile <path>`,
+    `--auto-printer`; new `printprep printer-list` command.
+  - Web: a Printer dropdown (auto-detected + bundled) wired into suggest and
+    export; `/api/printers` endpoint.
+  - 100% offline — printer data never comes from the internet.
+
+### Removed
+- GitHub Actions CI workflow (to avoid any Actions-minute cost on the private
+  repo). Tests still run locally via `pytest` and `node --test`.
+
+### Fixed
+- ruff lint errors (unused imports, redundant f-string).
+
 ## [0.1.0] — 2026-05-28
 
 First public preview release.

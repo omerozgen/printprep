@@ -1,5 +1,8 @@
 {
-  "_meta": { "name": "العربية", "code": "ar" },
+  "_meta": {
+    "name": "العربية",
+    "code": "ar"
+  },
   "cli_group_help": "تحليل نماذج STL واقتراحات إعدادات الشرائح.",
   "cmd_analyze_help": "تحليل نموذج وتقرير الهندسة والمشاكل والنتوءات.",
   "cmd_fix_help": "إصلاح مشاكل الشبكة الشائعة وكتابة STL مُصلَّح.",
@@ -17,7 +20,7 @@
   "opt_suggest_import": "استخدام ملف تعريف مادة مُصدَّر من شريحتك (.json/.ini/.fdm_material).",
   "opt_suggest_export": "كتابة ملفات تعريف قابلة للاستيراد بدلاً من طباعة JSON.",
   "opt_suggest_outdir": "مجلد ملفات خرج --export.",
-  "opt_suggest_printer": "اسم الطابعة المستهدفة لـ --export orca (مثال \"Creality K1 Max 0.4 nozzle\").",
+  "opt_suggest_printer": "اسم الطابعة — يبحث في المواصفات المضمّنة ويربط الملف المُصدَّر بها (مثال \"Anycubic Kobra 3 Max\").",
   "opt_suggest_price": "سعر الفتيل لكل كغ (مثال 25). يضيف تقدير التكلفة.",
   "opt_suggest_currency": "رمز العملة المعروض بجانب التكلفة (مثال SAR, USD).",
   "opt_orient_output": "أين تكتب STL المُعاد توجيهه.",
@@ -59,5 +62,12 @@
   "err_not_a_directory": "ليس مجلداً: {path}",
   "err_no_files_matching": "لا ملفات تطابق '{pattern}' في {dir}",
   "err_invalid_bed": "--bed '{bed}' غير صحيح. الصيغة المتوقعة: '420x420'.",
-  "err_nothing_to_pack": "لا شيء لترتيبه."
+  "err_nothing_to_pack": "لا شيء لترتيبه.",
+  "opt_suggest_printer_profile": "مسار ملف تعريف آلة الشريحة (.json) للحصول على مواصفات طابعة دقيقة.",
+  "opt_suggest_auto_printer": "اكتشاف الطابعة تلقائياً من الشريحة المثبتة.",
+  "cmd_printer_list_help": "إدراج الطابعات المكتشفة (من شريحتك) والمضمّنة.",
+  "msg_printer_used": "الطابعة المستخدمة: {name} ({src}).",
+  "msg_printers_detected": "تم اكتشاف {n} طابعة من الشرائح المثبتة.",
+  "msg_printer_usage": "استخدم 'printprep suggest --printer \"<الاسم>\"' أو '--auto-printer' لتخصيص الملف.",
+  "err_printer_profile_failed": "تعذّرت قراءة ملف تعريف الطابعة: {path}"
 }

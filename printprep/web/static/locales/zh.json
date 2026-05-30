@@ -1,5 +1,9 @@
 {
-  "_meta": { "name": "中文", "code": "zh", "dir": "ltr" },
+  "_meta": {
+    "name": "中文",
+    "code": "zh",
+    "dir": "ltr"
+  },
   "title": "PrintPrep — STL 分析与切片机建议",
   "header_subtitle": "STL 模型分析、修复和切片机配置建议",
   "drop_title": "将 STL 文件拖到这里",
@@ -144,5 +148,8 @@
   "prop_retraction_speed": "回抽速度",
   "prop_filament": "耗材",
   "prop_time": "估计时间",
-  "prop_cost": "费用"
+  "prop_cost": "费用",
+  "label_printer": "打印机",
+  "printer_none": "通用 / 未指定",
+  "printer_detected": "(已检测)"
 }

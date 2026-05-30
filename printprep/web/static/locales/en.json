@@ -148,5 +148,8 @@
   "prop_retraction_speed": "Retraction speed",
   "prop_filament": "Filament",
   "prop_time": "Estimated time",
-  "prop_cost": "Cost"
+  "prop_cost": "Cost",
+  "label_printer": "Printer",
+  "printer_none": "Generic / not specified",
+  "printer_detected": "(detected)"
 }

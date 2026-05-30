@@ -11,6 +11,7 @@ STL model analizi ve slicer ayar önerisi aracı.
 - **Model Analizi**: Overlapping geometry, thin walls, inverted normals tespiti
 - **Sorun Tespiti**: Baskı öncesi potansiyel hataların belirlenmesi
 - **Slicer Önerileri**: Creality Print ve AnycubicSlicerNext için ayar profilleri
+- **Yazıcı-farkında**: Kurulu slicer'ından (veya gömülü yazıcı veritabanından) gerçek yazıcı özelliklerini (nozzle, tabla boyutu, retraction, max hız) okur. %100 offline. `printprep printer-list` ile bak.
 - **Model Onarım**: Temel mesh onarım işlemleri
 
 ## Kurulum

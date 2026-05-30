@@ -1,5 +1,8 @@
 {
-  "_meta": { "name": "Русский", "code": "ru" },
+  "_meta": {
+    "name": "Русский",
+    "code": "ru"
+  },
   "cli_group_help": "Анализ STL-моделей и рекомендации настроек слайсера.",
   "cmd_analyze_help": "Проанализировать модель и отчитаться о геометрии, проблемах и свесах.",
   "cmd_fix_help": "Починить распространённые проблемы меша и записать исправленный STL.",
@@ -17,7 +20,7 @@
   "opt_suggest_import": "Использовать профиль материала из вашего слайсера (.json/.ini/.fdm_material).",
   "opt_suggest_export": "Записать импортируемые слайсером файлы профиля вместо вывода JSON.",
   "opt_suggest_outdir": "Каталог для выходных файлов --export.",
-  "opt_suggest_printer": "Имя целевого принтера для --export orca (например \"Creality K1 Max 0.4 nozzle\").",
+  "opt_suggest_printer": "Имя принтера — ищет встроенные характеристики и привязывает экспортируемый профиль (напр. \"Anycubic Kobra 3 Max\").",
   "opt_suggest_price": "Цена филамента за кг (например 25). Добавляет оценку стоимости.",
   "opt_suggest_currency": "Метка валюты рядом со стоимостью (например RUB, USD, EUR).",
   "opt_orient_output": "Куда записать переориентированный STL.",
@@ -59,5 +62,12 @@
   "err_not_a_directory": "Не каталог: {path}",
   "err_no_files_matching": "Нет файлов с '{pattern}' в {dir}",
   "err_invalid_bed": "Недопустимый --bed '{bed}'. Ожидаемый формат: '420x420'.",
-  "err_nothing_to_pack": "Нечего упаковывать."
+  "err_nothing_to_pack": "Нечего упаковывать.",
+  "opt_suggest_printer_profile": "Путь к профилю машины слайсера (.json) для точных характеристик.",
+  "opt_suggest_auto_printer": "Автоопределение принтера из установленного слайсера.",
+  "cmd_printer_list_help": "Список обнаруженных (из слайсера) и встроенных принтеров.",
+  "msg_printer_used": "Используется принтер: {name} ({src}).",
+  "msg_printers_detected": "Обнаружено принтеров из установленных слайсеров: {n}.",
+  "msg_printer_usage": "Используйте 'printprep suggest --printer \"<имя>\"' или '--auto-printer' для настройки.",
+  "err_printer_profile_failed": "Не удалось прочитать профиль принтера: {path}"
 }

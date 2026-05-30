@@ -1,5 +1,9 @@
 {
-  "_meta": { "name": "日本語", "code": "ja", "dir": "ltr" },
+  "_meta": {
+    "name": "日本語",
+    "code": "ja",
+    "dir": "ltr"
+  },
   "title": "PrintPrep — STL 解析・スライサー提案",
   "header_subtitle": "STL モデル解析、修復、スライサープロファイル提案",
   "drop_title": "STL ファイルをここにドロップ",
@@ -144,5 +148,8 @@
   "prop_retraction_speed": "リトラクション速度",
   "prop_filament": "フィラメント",
   "prop_time": "推定時間",
-  "prop_cost": "費用"
+  "prop_cost": "費用",
+  "label_printer": "プリンター",
+  "printer_none": "汎用 / 未指定",
+  "printer_detected": "(検出済)"
 }

@@ -1,5 +1,8 @@
 {
-  "_meta": { "name": "ਪੰਜਾਬੀ", "code": "pa" },
+  "_meta": {
+    "name": "ਪੰਜਾਬੀ",
+    "code": "pa"
+  },
   "cli_group_help": "STL ਮਾਡਲ ਵਿਸ਼ਲੇਸ਼ਣ ਅਤੇ ਸਲਾਈਸਰ ਸੈਟਿੰਗ ਸਿਫਾਰਸ਼ਾਂ।",
   "cmd_analyze_help": "ਮਾਡਲ ਦਾ ਵਿਸ਼ਲੇਸ਼ਣ ਕਰੋ ਅਤੇ ਜਿਓਮੈਟਰੀ, ਸਮੱਸਿਆਵਾਂ ਅਤੇ ਓਵਰਹੈਂਗ ਰਿਪੋਰਟ ਕਰੋ।",
   "cmd_fix_help": "ਆਮ mesh ਸਮੱਸਿਆਵਾਂ ਦੀ ਮੁਰੰਮਤ ਕਰੋ ਅਤੇ ਠੀਕ ਕੀਤਾ STL ਲਿਖੋ।",
@@ -17,7 +20,7 @@
   "opt_suggest_import": "ਆਪਣੇ ਸਲਾਈਸਰ ਤੋਂ ਨਿਰਯਾਤ ਕੀਤੀ ਸਮੱਗਰੀ ਪ੍ਰੋਫਾਈਲ ਵਰਤੋ (.json/.ini/.fdm_material)।",
   "opt_suggest_export": "JSON ਛਾਪਣ ਦੀ ਥਾਂ ਸਲਾਈਸਰ-ਆਯਾਤ ਯੋਗ ਪ੍ਰੋਫਾਈਲ ਫਾਈਲਾਂ ਲਿਖੋ।",
   "opt_suggest_outdir": "--export ਆਉਟਪੁੱਟ ਫਾਈਲਾਂ ਲਈ ਡਾਇਰੈਕਟਰੀ।",
-  "opt_suggest_printer": "--export orca ਲਈ ਲਕਸ਼ ਪ੍ਰਿੰਟਰ ਨਾਮ (ਜਿਵੇਂ \"Creality K1 Max 0.4 nozzle\")।",
+  "opt_suggest_printer": "ਪ੍ਰਿੰਟਰ ਨਾਮ — ਅੰਦਰੂਨੀ ਵਿਸ਼ੇਸ਼ਤਾਵਾਂ ਖੋਜਦਾ ਹੈ ਅਤੇ ਨਿਰਯਾਤ ਪ੍ਰੀਸੈਟ ਨੂੰ ਜੋੜਦਾ ਹੈ (ਜਿਵੇਂ \"Anycubic Kobra 3 Max\")।",
   "opt_suggest_price": "ਪ੍ਰਤੀ ਕਿਲੋ ਫਿਲਾਮੈਂਟ ਕੀਮਤ (ਜਿਵੇਂ 2000)। ਲਾਗਤ ਅਨੁਮਾਨ ਜੋੜਦਾ ਹੈ।",
   "opt_suggest_currency": "ਲਾਗਤ ਨਾਲ ਦਿਖਾਈ ਜਾਣ ਵਾਲੀ ਮੁਦਰਾ (ਜਿਵੇਂ INR, USD)।",
   "opt_orient_output": "ਮੁੜ-ਸਥਿਤ STL ਕਿੱਥੇ ਲਿਖੋ।",
@@ -59,5 +62,12 @@
   "err_not_a_directory": "ਡਾਇਰੈਕਟਰੀ ਨਹੀਂ: {path}",
   "err_no_files_matching": "{dir} ਵਿੱਚ '{pattern}' ਨਾਲ ਮਿਲਦੀ ਕੋਈ ਫਾਈਲ ਨਹੀਂ",
   "err_invalid_bed": "ਅਮਾਨਯ --bed '{bed}'। ਉਮੀਦ: '420x420'।",
-  "err_nothing_to_pack": "ਪੈਕ ਕਰਨ ਲਈ ਕੁਝ ਨਹੀਂ।"
+  "err_nothing_to_pack": "ਪੈਕ ਕਰਨ ਲਈ ਕੁਝ ਨਹੀਂ।",
+  "opt_suggest_printer_profile": "ਸਹੀ ਪ੍ਰਿੰਟਰ ਵਿਸ਼ੇਸ਼ਤਾਵਾਂ ਲਈ ਸਲਾਈਸਰ ਮਸ਼ੀਨ ਪ੍ਰੋਫਾਈਲ (.json) ਦਾ ਪਾਥ।",
+  "opt_suggest_auto_printer": "ਆਪਣੇ ਇੰਸਟਾਲ ਕੀਤੇ ਸਲਾਈਸਰ ਤੋਂ ਪ੍ਰਿੰਟਰ ਆਪੇ ਪਛਾਣੋ।",
+  "cmd_printer_list_help": "ਪਛਾਣੇ ਗਏ (ਤੁਹਾਡੇ ਸਲਾਈਸਰ ਤੋਂ) ਅਤੇ ਅੰਦਰੂਨੀ ਪ੍ਰਿੰਟਰ ਸੂਚੀਬੱਧ ਕਰੋ।",
+  "msg_printer_used": "ਵਰਤਿਆ ਪ੍ਰਿੰਟਰ: {name} ({src})।",
+  "msg_printers_detected": "ਇੰਸਟਾਲ ਕੀਤੇ ਸਲਾਈਸਰਾਂ ਤੋਂ {n} ਪ੍ਰਿੰਟਰ ਪਛਾਣੇ ਗਏ।",
+  "msg_printer_usage": "ਪ੍ਰੋਫਾਈਲ ਅਨੁਕੂਲ ਕਰਨ ਲਈ 'printprep suggest --printer \"<ਨਾਮ>\"' ਜਾਂ '--auto-printer' ਵਰਤੋ।",
+  "err_printer_profile_failed": "ਪ੍ਰਿੰਟਰ ਪ੍ਰੋਫਾਈਲ ਪੜ੍ਹ ਨਹੀਂ ਸਕਿਆ: {path}"
 }

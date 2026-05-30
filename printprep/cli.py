@@ -22,8 +22,11 @@ from printprep.i18n import t
 from printprep.slicer import (
     EXPORT_FORMATS,
     SLICER_NAMES,
+    bed_fit_warning,
     export_profile,
+    get_bundled,
     get_slicer,
+    parse_machine_file,
     parse_material_profile,
 )
 
@@ -33,6 +36,35 @@ err_console = Console(stderr=True, style="bold red")
 
 def _yn(value: bool) -> str:
     return "[green]Yes[/green]" if value else "[red]No[/red]"
+
+
+def _resolve_printer(printer: str = "", printer_profile: str = "", auto: bool = False):
+    """Resolve a PrinterSpec from CLI options. Priority:
+
+    1. --printer-profile PATH  (a slicer machine JSON; most precise)
+    2. --auto-printer          (scan installed slicers; match --printer name if given)
+    3. --printer NAME          (bundled database lookup)
+
+    Returns the PrinterSpec or None. Prints a friendly note on what was used.
+    """
+    if printer_profile:
+        spec = parse_machine_file(printer_profile)
+        if spec is None:
+            err_console.print(t("err_printer_profile_failed", path=printer_profile))
+        return spec
+    if auto:
+        from printprep.slicer.discover import discover_printers
+        found = discover_printers()
+        if printer:
+            for row in found:
+                if printer.lower() in row["spec"].name.lower():
+                    return row["spec"]
+        if found:
+            return found[0]["spec"]
+        # fall through to bundled lookup if nothing detected
+    if printer:
+        return get_bundled(printer)
+    return None
 
 
 def _fmt_minutes(minutes: float) -> str:
@@ -158,11 +190,15 @@ def fix(path, output):
               show_default=True, help=t("opt_suggest_outdir"))
 @click.option("--printer", default="", show_default=False,
               help=t("opt_suggest_printer"))
+@click.option("--printer-profile", "printer_profile", type=click.Path(),
+              help=t("opt_suggest_printer_profile"))
+@click.option("--auto-printer", "auto_printer", is_flag=True,
+              help=t("opt_suggest_auto_printer"))
 @click.option("--price-per-kg", "price_per_kg", type=float, default=None,
               help=t("opt_suggest_price"))
 @click.option("--currency", default="", help=t("opt_suggest_currency"))
 def suggest(path, slicer, material, import_profile, export_fmt, out_dir, printer,
-            price_per_kg, currency):
+            printer_profile, auto_printer, price_per_kg, currency):
     try:
         mesh = load_mesh(path)
     except PrintPrepError as exc:
@@ -171,6 +207,7 @@ def suggest(path, slicer, material, import_profile, export_fmt, out_dir, printer
 
     result = analyze(mesh, path=path)
     generator = get_slicer(slicer)
+    printer_spec = _resolve_printer(printer, printer_profile, auto_printer)
     if import_profile:
         try:
             with open(import_profile, encoding="utf-8") as fh:
@@ -178,17 +215,27 @@ def suggest(path, slicer, material, import_profile, export_fmt, out_dir, printer
         except (OSError, PrintPrepError) as exc:
             err_console.print(f"Profile import failed: {exc}")
             sys.exit(1)
-        profile = generator.build_profile_from_preset(result, preset)
+        profile = generator.build_profile_from_preset(result, preset, printer_spec)
     else:
         preset = get_material(material)
-        profile = generator.build_profile_from_preset(result, preset)
+        profile = generator.build_profile_from_preset(result, preset, printer_spec)
+
+    if printer_spec is not None:
+        console.print(t("msg_printer_used", name=printer_spec.name,
+                        src=("slicer" if printer_spec.source == "slicer" else "bundled")))
+        warn = bed_fit_warning(result, printer_spec)
+        if warn:
+            console.print(f"[bold yellow]⚠ {warn['text']}[/bold yellow]")
 
     # Estimate filament use, weight and print time from the chosen profile.
     estimate = estimate_print_job(result, profile, preset,
                                   price_per_kg=price_per_kg, currency=currency)
 
+    # An explicit --printer string wins for export binding; otherwise use the
+    # resolved spec's name so the preset binds to the right printer.
+    export_printer = printer or (printer_spec.name if printer_spec else "")
     if export_fmt:
-        files = export_profile(profile, export_fmt, printer=printer)
+        files = export_profile(profile, export_fmt, printer=export_printer)
         os.makedirs(out_dir, exist_ok=True)
         console.print(f"[bold]Exported {export_fmt} profile for {profile.slicer}:[/bold]")
         for fname, text in files.items():
@@ -295,6 +342,36 @@ def slicer_discover():
         f"\n{len(rows)} profile(s). "
         "Use [cyan]printprep suggest --import-profile <path>[/cyan] to base a recommendation on one."
     )
+
+
+@main.command(name="printer-list", help=t("cmd_printer_list_help"))
+def printer_list():
+    from printprep.slicer.discover import discover_printers
+    from printprep.slicer.printer import BUNDLED_PRINTERS
+
+    table = Table(title="Printers", title_style="bold cyan")
+    table.add_column("Source", style="cyan")
+    table.add_column("Name", overflow="fold")
+    table.add_column("Bed (mm)", justify="right")
+    table.add_column("Nozzle", justify="right")
+    table.add_column("Retraction", justify="right")
+
+    detected = discover_printers()
+    for row in detected:
+        s = row["spec"]
+        table.add_row(f"{row['slicer']}", s.name,
+                      f"{s.bed_x_mm:.0f}×{s.bed_y_mm:.0f}×{s.bed_z_mm:.0f}",
+                      f"{s.nozzle_diameter_mm}",
+                      f"{s.retraction_mm if s.retraction_mm is not None else '—'}")
+    for s in BUNDLED_PRINTERS:
+        table.add_row("bundled", s.name,
+                      f"{s.bed_x_mm:.0f}×{s.bed_y_mm:.0f}×{s.bed_z_mm:.0f}",
+                      f"{s.nozzle_diameter_mm}",
+                      f"{s.retraction_mm if s.retraction_mm is not None else '—'}")
+    console.print(table)
+    if detected:
+        console.print(t("msg_printers_detected", n=len(detected)))
+    console.print(t("msg_printer_usage"))
 
 
 @main.command(help=t("cmd_batch_help"))

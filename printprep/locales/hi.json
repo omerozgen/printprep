@@ -1,5 +1,8 @@
 {
-  "_meta": { "name": "हिन्दी", "code": "hi" },
+  "_meta": {
+    "name": "हिन्दी",
+    "code": "hi"
+  },
   "cli_group_help": "STL मॉडल विश्लेषण और स्लाइसर सेटिंग सिफारिशें।",
   "cmd_analyze_help": "मॉडल का विश्लेषण करें और ज्यामिति, समस्याएँ और ओवरहैंग रिपोर्ट करें।",
   "cmd_fix_help": "सामान्य मेश समस्याओं को ठीक करें और ठीक की गई STL लिखें।",
@@ -17,7 +20,7 @@
   "opt_suggest_import": "अपने स्लाइसर से निर्यात की गई सामग्री प्रोफाइल का उपयोग करें (.json/.ini/.fdm_material)।",
   "opt_suggest_export": "JSON प्रिंट करने के बजाय स्लाइसर-आयात योग्य प्रोफाइल फ़ाइलें लिखें।",
   "opt_suggest_outdir": "--export आउटपुट फ़ाइलों के लिए निर्देशिका।",
-  "opt_suggest_printer": "--export orca के लिए लक्ष्य प्रिंटर नाम (उदा. \"Creality K1 Max 0.4 nozzle\")।",
+  "opt_suggest_printer": "प्रिंटर नाम — अंतर्निहित विनिर्देश खोजता है और निर्यातित प्रीसेट को बाँधता है (उदा. \"Anycubic Kobra 3 Max\")।",
   "opt_suggest_price": "प्रति किग्रा फिलामेंट मूल्य (उदा. 2000)। लागत अनुमान जोड़ता है।",
   "opt_suggest_currency": "लागत के साथ दिखाई जाने वाली मुद्रा (उदा. INR, USD)।",
   "opt_orient_output": "पुनः-अभिविन्यास STL कहाँ लिखें।",
@@ -59,5 +62,12 @@
   "err_not_a_directory": "एक निर्देशिका नहीं: {path}",
   "err_no_files_matching": "{dir} में '{pattern}' से मेल खाने वाली कोई फ़ाइल नहीं",
   "err_invalid_bed": "अमान्य --bed '{bed}'. अपेक्षित: '420x420'।",
-  "err_nothing_to_pack": "पैक करने के लिए कुछ नहीं।"
+  "err_nothing_to_pack": "पैक करने के लिए कुछ नहीं।",
+  "opt_suggest_printer_profile": "सटीक प्रिंटर विनिर्देशों के लिए स्लाइसर मशीन प्रोफाइल (.json) का पथ।",
+  "opt_suggest_auto_printer": "अपने स्थापित स्लाइसर से प्रिंटर स्वतः पहचानें।",
+  "cmd_printer_list_help": "पहचाने गए (आपके स्लाइसर से) और अंतर्निहित प्रिंटर सूचीबद्ध करें।",
+  "msg_printer_used": "प्रयुक्त प्रिंटर: {name} ({src})।",
+  "msg_printers_detected": "स्थापित स्लाइसरों से {n} प्रिंटर पहचाने गए।",
+  "msg_printer_usage": "प्रोफाइल अनुकूलित करने हेतु 'printprep suggest --printer \"<नाम>\"' या '--auto-printer' का उपयोग करें।",
+  "err_printer_profile_failed": "प्रिंटर प्रोफाइल नहीं पढ़ सका: {path}"
 }

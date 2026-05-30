@@ -1,5 +1,8 @@
 {
-  "_meta": { "name": "한국어", "code": "ko" },
+  "_meta": {
+    "name": "한국어",
+    "code": "ko"
+  },
   "cli_group_help": "STL 모델 분석과 슬라이서 설정 추천.",
   "cmd_analyze_help": "모델을 분석하고 기하, 문제, 오버행을 보고합니다.",
   "cmd_fix_help": "흔한 메시 문제를 수리하고 수리된 STL을 씁니다.",
@@ -17,7 +20,7 @@
   "opt_suggest_import": "슬라이서에서 내보낸 재료 프로필 사용 (.json/.ini/.fdm_material).",
   "opt_suggest_export": "JSON 출력 대신 슬라이서 가져오기용 프로필 파일 쓰기.",
   "opt_suggest_outdir": "--export 출력 파일 디렉토리.",
-  "opt_suggest_printer": "--export orca용 대상 프린터 이름 (예: \"Creality K1 Max 0.4 nozzle\").",
+  "opt_suggest_printer": "프린터 이름 — 내장 사양을 조회하고 내보낸 프리셋을 연결 (예: \"Anycubic Kobra 3 Max\").",
   "opt_suggest_price": "kg당 필라멘트 가격 (예: 25). 비용 추정을 추가합니다.",
   "opt_suggest_currency": "비용 옆에 표시될 통화 (예: KRW, USD).",
   "opt_orient_output": "재배치된 STL의 출력 위치.",
@@ -59,5 +62,12 @@
   "err_not_a_directory": "디렉토리가 아님: {path}",
   "err_no_files_matching": "{dir}에 '{pattern}'와 일치하는 파일 없음",
   "err_invalid_bed": "잘못된 --bed '{bed}'. 예상 형식: '420x420'.",
-  "err_nothing_to_pack": "패킹할 항목 없음."
+  "err_nothing_to_pack": "패킹할 항목 없음.",
+  "opt_suggest_printer_profile": "정확한 프린터 사양을 위한 슬라이서 머신 프로필(.json) 경로.",
+  "opt_suggest_auto_printer": "설치된 슬라이서에서 프린터 자동 감지.",
+  "cmd_printer_list_help": "감지된(슬라이서에서) 프린터와 내장 프린터를 나열.",
+  "msg_printer_used": "사용 프린터: {name} ({src}).",
+  "msg_printers_detected": "설치된 슬라이서에서 {n}대의 프린터 감지됨.",
+  "msg_printer_usage": "프로필을 맞추려면 'printprep suggest --printer \"<이름>\"' 또는 '--auto-printer' 사용.",
+  "err_printer_profile_failed": "프린터 프로필을 읽을 수 없음: {path}"
 }
