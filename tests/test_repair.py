@@ -17,7 +17,7 @@ def test_geometry_preserved_accepts_similar(clean_cube):
 
 def test_repair_makes_watertight(broken_cube):
     assert broken_cube.is_watertight is False
-    mesh, report = repair_mesh(broken_cube)
+    _, report = repair_mesh(broken_cube)
     assert report.watertight_after is True
     # Volume must be positive — guards against the fix-normals-before-fill ordering bug.
     assert report.volume_after > 0

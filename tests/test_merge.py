@@ -9,7 +9,7 @@ def test_merge_boolean_union_when_bodies_are_volumes(clean_cube):
     b.apply_translation([10, 0, 0])
     combo = trimesh.util.concatenate([clean_cube, b])
 
-    merged, report = merge_to_single(combo)
+    _, report = merge_to_single(combo)
 
     assert report.bodies_before == 2
     if report.method == "boolean":  # manifold3d available
