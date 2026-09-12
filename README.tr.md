@@ -133,7 +133,7 @@ printprep printer-list
 printprep slicer-discover
 
 # 9. Birden fazla modeli yazıcı tablasına otomatik yerleştir
-printprep pack ./parcalar --bed-x 220 --bed-y 220 --output-dir ./yerlesim
+printprep pack ./parcalar --bed 220x220 --out-dir ./yerlesim
 ```
 
 ---

@@ -133,7 +133,7 @@ printprep printer-list
 printprep slicer-discover
 
 # 9. Pack multiple STLs onto your build plate
-printprep pack ./parts_folder --bed-x 220 --bed-y 220 --output-dir ./packed
+printprep pack ./parts_folder --bed 220x220 --out-dir ./packed
 ```
 
 ---
