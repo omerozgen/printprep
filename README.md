@@ -1,155 +1,211 @@
 # PrintPrep
 
-**English** | [Türkçe](README.tr.md) | [中文](README.zh.md) | [Español](README.es.md) | [العربية](README.ar.md) | [हिन्दी](README.hi.md) | [বাংলা](README.bn.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [日本語](README.ja.md) | [ਪੰਜਾਬੀ](README.pa.md) | [Deutsch](README.de.md) | [Basa Jawa](README.jv.md) | [한국어](README.ko.md) | [Français](README.fr.md)
+<p align="center">
+  <img src="https://raw.githubusercontent.com/omerozgen/printprep/main/printprep/web/static/favicon.ico" alt="PrintPrep Logo" width="80" height="80" />
+</p>
 
-STL model analysis and slicer-profile suggestion tool.
+<p align="center">
+  <b>100% Offline & Private STL Model Analysis, Automated Mesh Repair & Slicer Assistant</b>
+</p>
 
-Spot likely print problems before you slice, and get slicer settings tailored
-to your model.
+<p align="center">
+  <a href="https://github.com/omerozgen/printprep/actions/workflows/ci.yml"><img src="https://github.com/omerozgen/printprep/actions/workflows/ci.yml/badge.svg" alt="CI Status" /></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" /></a>
+  <img src="https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12-blue" alt="Python Versions" />
+  <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey" alt="Platform" />
+  <img src="https://img.shields.io/badge/privacy-100%25%20local%20%26%20offline-green" alt="100% Offline" />
+</p>
 
-## Features
+---
 
-- **Model analysis** — overlapping geometry, thin walls, inverted normals,
-  open edges / holes, separate bodies, non-manifold edges, self-intersections.
-- **Problem detection** — identify potential failures before you start the
-  print.
-- **Slicer suggestions** — profile presets for Creality Print and
-  AnycubicSlicerNext.
-- **Printer-aware** — reads your real printer specs (nozzle, bed size,
-  retraction, max speed) from your installed slicer, or from a bundled
-  printer database. 100% offline. See `printprep printer-list`.
-- **Mesh repair** — basic repair plus optional aggressive escalation via
-  `pymeshfix` with a guard that rejects mangled results.
-- **100% local** — model data never leaves your machine. No accounts, no
-  telemetry.
+<p align="center">
+  <b>🌐 Choose Language / Dil Seçimi:</b><br>
+  <b>English</b> •
+  <a href="README.tr.md">Türkçe</a> •
+  <a href="README.zh.md">中文</a> •
+  <a href="README.de.md">Deutsch</a> •
+  <a href="README.es.md">Español</a> •
+  <a href="README.fr.md">Français</a> •
+  <a href="README.ja.md">日本語</a> •
+  <a href="README.ko.md">한국어</a> •
+  <a href="README.ru.md">Русский</a> •
+  <a href="README.pt.md">Português</a> •
+  <a href="README.ar.md">العربية</a> •
+  <a href="README.hi.md">हिन्दी</a> •
+  <a href="README.bn.md">বাংলা</a> •
+  <a href="README.pa.md">ਪੰਜਾਬੀ</a> •
+  <a href="README.jv.md">Basa Jawa</a>
+</p>
 
-## Install
+---
+
+## 📖 Overview
+
+**PrintPrep** is an all-in-one pre-flight diagnostic tool and slicer assistant for 3D printing. It detects structural flaws in STL meshes before slicing, fixes common geometry problems, auto-orients parts for minimal supports, packs multi-part builds onto your printer bed, and generates optimized slicer profiles tailored to your exact printer and material.
+
+**🔒 100% Local & Private:** No cloud dependencies, no telemetry, no accounts. All mesh processing and slicing calculations happen locally on your hardware.
+
+---
+
+## ✨ Features
+
+### 🔍 Deep Mesh Diagnostics
+- **Watertight & Manifold Check:** Identifies holes, boundary edges, and non-manifold edges.
+- **Ray-Casted Wall Thickness:** Measures actual wall thickness distribution (`min`, `p5`, `p50`, `max`) to warn about unprintable thin features.
+- **Overhang Analysis:** Calculates downward-facing overhang area fraction and steepest angles based on your printer's support threshold.
+- **Inverted Normals:** Flags reversed face windings that cause slicer voids.
+- **Multi-body Separation:** Detects floating or disconnected islands within a single STL.
+- **Self-Intersection Detection:** Pinpoints colliding triangles (via optional `[analyze]` extra).
+
+### 🛠️ Intelligent Mesh Repair & Boolean Merge
+- **One-Click Fix:** Cleans duplicate vertices, removes degenerate zero-area faces, seals open boundary holes, and corrects normals.
+- **Guarded Aggressive Repair:** Automatically escalates to `pymeshfix` for complex broken meshes, with a volume-guard that prevents accidental detail collapse.
+- **Boolean Union:** Combines multi-body STLs into a unified solid manifold (`manifold3d`, `[merge]` extra).
+
+### 🧭 Auto-Orientation & Bed Packing
+- **Auto-Orient (`orient`):** Tests convex-hull face projections to minimize overhang surface area and support material usage.
+- **Multi-Part Bed Packing (`pack`):** Arranges multiple STL models onto your printer's bed with configurable spacing and shelf bin-packing.
+
+### 🖨️ Printer-Aware Slicer Suggestions & Job Estimation
+- **Hardware Integration:** Reads real nozzle diameters, bed dimensions, acceleration, and retraction limits from your installed slicer (Creality Print, OrcaSlicer, Anycubic Slicer, PrusaSlicer).
+- **Fallback Database:** Includes pre-calibrated machine profiles for Creality, Anycubic, Bambu Lab, Prusa, and generic beds.
+- **Real Settings Estimation:** Computes filament usage (length & weight in grams), print time, and total cost based on your active slicer profiles.
+- **Direct Export:** Generates ready-to-import `.json` (OrcaSlicer / Creality / Anycubic) and `.ini` (PrusaSlicer / SuperSlicer) profiles.
+
+### 🖥️ Interactive 3D Web & Desktop GUI
+- **Three.js Web UI:** Drag-and-drop 3D inspection with color-coded overlays:
+  - 🔴 **Red:** Overhang faces requiring support
+  - 🟡 **Amber:** Ultra-thin walls (< 0.8 mm)
+  - 🟣 **Magenta:** Open boundary edges & holes
+  - 🔵 **Cyan:** Inverted surface normals
+  - 🌈 **Rainbow:** Distinct disconnected bodies
+- **Interactive Tools:** 2-point 3D measurement caliper and cross-section clipping planes (X / Y / Z).
+- **Native Desktop App:** Runs via `pywebview` in a standalone window (`PrintPrep.app` on macOS, `PrintPrep.bat` on Windows, `PrintPrep.desktop` on Linux).
+
+---
+
+## 🚀 Installation
+
+Install from PyPI:
 
 ```bash
 pip install printprep
 ```
 
-## Quick start
+### Optional Feature Extras
+
+| Extra | Command | Description |
+| :--- | :--- | :--- |
+| **Web UI** | `pip install "printprep[web]"` | FastAPI server and Three.js 3D viewer |
+| **Desktop App** | `pip install "printprep[web,desktop]"` | Native OS desktop window (`pywebview`) |
+| **Aggressive Repair** | `pip install "printprep[repair]"` | `pymeshfix` for stubborn, complex holes |
+| **Boolean Merge** | `pip install "printprep[merge]"` | High-speed boolean unions via `manifold3d` |
+| **Self-Intersection**| `pip install "printprep[analyze]"` | `pymeshlab` self-intersection checks (Py 3.10+) |
+| **Full Suite** | `pip install "printprep[all]"` | Installs all core and optional features |
+
+---
+
+## ⚡ Quick Start (CLI)
 
 ```bash
-# Analyze a model
+# 1. Analyze an STL model
 printprep analyze model.stl
 
-# Repair common issues
+# 2. Repair holes, non-manifold edges, and inverted normals
 printprep fix model.stl --output fixed_model.stl
 
-# Auto-orient to the best print pose
+# 3. Orient the model for minimal support material
 printprep orient model.stl --output oriented_model.stl
 
-# Merge separate bodies into one piece
-# (boolean union requires: pip install -e ".[merge]")
-printprep merge model.stl --output merged_model.stl
+# 4. Merge disconnected separate bodies into a single solid mesh
+printprep merge multi_body.stl --output merged.stl
 
-# Aggressive repair (optional, for stubborn meshes): pip install -e ".[repair]"
-#   `fix` automatically escalates to pymeshfix when the standard repair isn't
-#   enough. If the escalation would damage the geometry, a safety guard kicks
-#   in and the standard result is kept.
+# 5. Suggest slicer settings based on your printer and material
+printprep suggest model.stl --slicer creality --material pla --auto-printer
 
-# Batch-analyze every STL in a folder
+# 6. Batch-analyze an entire directory of STLs
 printprep batch ./models --json report.json
 
-# Slicer profile suggestion
-printprep suggest model.stl --slicer creality --material pla
+# 7. List all detected slicers and bundled printers
+printprep printer-list
 
-# Import your own slicer profile (OrcaSlicer .json / PrusaSlicer .ini / Cura .fdm_material)
-printprep suggest model.stl --slicer creality --import-profile my_filament.json
+# 8. Discover installed filament and process profiles
+printprep slicer-discover
 
-# Export a profile that loads directly into your slicer
-#   orca  -> OrcaSlicer / Creality Print / Anycubic Slicer (.json: filament + process)
-#   prusa -> PrusaSlicer / SuperSlicer (.ini)
-printprep suggest model.stl --slicer anycubic --material petg --export orca --out-dir ./profiles
+# 9. Pack multiple STLs onto your build plate
+printprep pack ./parts_folder --bed-x 220 --bed-y 220 --output-dir ./packed
 ```
 
-## Web UI
+---
 
-3D preview, drag-and-drop analysis, repair, and slicer suggestions — all in
-the browser:
+## 🌐 Web Interface
+
+Launch the interactive local web application:
 
 ```bash
-pip install -e ".[web]"   # one-time
-printprep serve           # http://127.0.0.1:8000
+printprep serve --host 127.0.0.1 --port 8000
+```
+Open your browser at `http://127.0.0.1:8000`. Drag and drop any `.stl` file to inspect geometry issues, toggle before/after repairs, take measurements, and export slicer profiles.
+
+---
+
+## 💻 Native Desktop Application
+
+Run PrintPrep as a standalone desktop window without touching the browser:
+
+```bash
+printprep app
 ```
 
-## Desktop app
+### Double-Click Launchers
 
-No browser required — `printprep app` opens the web UI inside a native
-window (WKWebView on macOS, WebView2 on Windows, GTK WebKit on Linux). The
-server runs in the background of the same process and shuts down when you
-close the window.
+- **macOS:** Double-click `PrintPrep.app` (or drag it to `/Applications` / Dock). Automatically handles Apple Silicon & Rosetta environments.
+- **Windows:** Double-click `PrintPrep.bat` (can be pinned to your Desktop or Taskbar).
+- **Linux:** Run `./install-linux.sh` to install `PrintPrep.desktop` into your system application launcher.
 
-```bash
-pip install -e ".[web,desktop]"   # includes pywebview
-printprep app                     # opens in a native window
-```
+---
 
-Double-click launchers (all platforms):
+## 🖨️ Supported Slicers & Ecosystem
 
-- **macOS:** double-click `PrintPrep.app` (or drag it to the Dock /
-  `/Applications`). First launch prompts you to pick the project folder
-  and remembers your choice.
-- **Windows:** double-click `PrintPrep.bat` (works as a Desktop shortcut
-  too).
-- **Linux:** run `./install-linux.sh` → installs
-  `~/.local/share/applications/printprep.desktop` and shows up as
-  **PrintPrep** in your app menu.
+| Slicer | Detection | Profile Import | Profile Export |
+| :--- | :---: | :---: | :---: |
+| **OrcaSlicer** | ✅ Automatic | ✅ `.json` | ✅ `.json` (Process + Filament) |
+| **Creality Print (5.x / 7.x)** | ✅ Automatic | ✅ `.json` | ✅ `.json` |
+| **AnycubicSlicerNext** | ✅ Automatic | ✅ `.json` | ✅ `.json` |
+| **PrusaSlicer / SuperSlicer** | ✅ Automatic | ✅ `.ini` | ✅ `.ini` |
+| **UltiMaker Cura** | ✅ Automatic | ✅ `.fdm_material` | — |
+| **Bambu Studio** | ✅ Bundled Specs | ✅ `.json` | ✅ `.json` |
 
-All of them call the same `printprep app` command. If pywebview isn't
-installed, they fall back to `printprep serve` + your default browser.
+---
 
-Runs entirely locally — your model data never leaves your machine. In the
-3D viewer, overhang surfaces are red, thin walls are amber, holes / open
-edges are magenta, inverted normals show as cyan backfaces, and separate
-bodies are colored differently. You can auto-orient the model, import
-your own slicer profile, and export a slicer-loadable profile (.zip).
-
-Material presets (temperatures, flow) are sourced from the
-[OrcaSlicer](https://github.com/SoftFever/OrcaSlicer) open-source filament
-library — see [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md). Geometry
-analysis is computed from the model itself.
-
-## Development
+## 🛠️ Development & Testing
 
 ```bash
-# Clone
+# 1. Clone repository
 git clone https://github.com/omerozgen/printprep.git
 cd printprep
 
-# Virtual environment
+# 2. Set up virtual environment
 python -m venv venv
-source venv/bin/activate  # macOS/Linux
-# venv\Scripts\activate   # Windows
+source venv/bin/activate  # Windows: venv\Scripts\activate
 
-# Dependencies
+# 3. Install development dependencies
 pip install -e ".[dev,web]"
 
-# Tests (Python)
+# 4. Run Python test suite (70 tests)
 pytest
 
-# Tests (3D viewer geometry helpers, Node 18+)
+# 5. Run 3D viewer geometry tests (Node 18+)
 node --test tests/js/geometry-utils.test.mjs
+
+# 6. Run linter
+ruff check printprep tests
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the contribution workflow,
-[SECURITY.md](SECURITY.md) for the security policy, and
-[CHANGELOG.md](CHANGELOG.md) for what's new.
+---
 
-## Supported slicers
+## 📄 License
 
-- Creality Print
-- AnycubicSlicerNext
-- Profile export also covers OrcaSlicer / PrusaSlicer / SuperSlicer formats.
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
 
-## Status
-
-Pre-1.0 preview (`0.1.x`). APIs and CLI surface may change. Bug reports and
-PRs are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## License
-
-[MIT](LICENSE). Third-party attributions live in
-[THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
+Third-party dependencies and open-source profiles (Three.js, OrcaSlicer filament database) are credited in [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
