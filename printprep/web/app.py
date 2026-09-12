@@ -206,7 +206,7 @@ def api_fix(model: UploadFile):
     if isinstance(stl_bytes, str):
         stl_bytes = stl_bytes.encode()
 
-    base = os.path.splitext(model.filename or "model.stl")[0]
+    base = os.path.splitext(os.path.basename(model.filename or "model.stl"))[0]
     download_name = f"{base}_fixed.stl"
     headers = {
         "Content-Disposition": f'attachment; filename="{download_name}"',
@@ -235,7 +235,7 @@ def api_orient(model: UploadFile):
     if isinstance(stl_bytes, str):
         stl_bytes = stl_bytes.encode()
 
-    base = os.path.splitext(model.filename or "model.stl")[0]
+    base = os.path.splitext(os.path.basename(model.filename or "model.stl"))[0]
     rx, ry, rz = report.euler_deg
     headers = {
         "Content-Disposition": f'attachment; filename="{base}_oriented.stl"',
@@ -282,7 +282,7 @@ def api_merge(model: UploadFile):
     if isinstance(stl_bytes, str):
         stl_bytes = stl_bytes.encode()
 
-    base = os.path.splitext(model.filename or "model.stl")[0]
+    base = os.path.splitext(os.path.basename(model.filename or "model.stl"))[0]
     headers = {
         "Content-Disposition": f'attachment; filename="{base}_merged.stl"',
         "X-Method": report.method,
