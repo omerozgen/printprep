@@ -39,9 +39,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     export; `/api/printers` endpoint.
   - 100% offline — printer data never comes from the internet.
 
-### Removed
-- GitHub Actions CI workflow (to avoid any Actions-minute cost on the private
-  repo). Tests still run locally via `pytest` and `node --test`.
+### Added (CI & Open Source)
+- Re-enabled GitHub Actions CI workflow for the public open-source repository (multi-OS pytest matrix, node --test, and ruff linting).
 
 ### Fixed
 - ruff lint errors (unused imports, redundant f-string).

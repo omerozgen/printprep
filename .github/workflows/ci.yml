@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  python:
+    name: pytest (${{ matrix.os }} / py${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        exclude:
+          # macOS arm64 + py3.9 has no scipy/numpy binary wheels on some combos.
+          - os: macos-latest
+            python-version: "3.9"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: System deps (Linux — rtree needs libspatialindex)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libspatialindex-dev
+
+      - name: System deps (macOS — rtree needs spatialindex)
+        if: runner.os == 'macOS'
+        run: brew install spatialindex
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,web]"
+
+      - name: Run pytest
+        run: pytest -q
+
+  js:
+    name: node --test (3D viewer helpers)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run node --test
+        run: node --test tests/js/geometry-utils.test.mjs
+
+  lint:
+    name: ruff
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install ruff
+        run: pip install ruff
+
+      - name: ruff check
+        run: ruff check printprep tests
